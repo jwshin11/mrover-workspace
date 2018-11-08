@@ -79,51 +79,9 @@ void StateMachine::run()
 				break;
 			}
 
-			case NavState::SearchFaceNorth:
+			case NavState::Search:
 			{
-				nextState = executeSearchFaceNorth();
-				break;
-			}
-
-			case NavState::SearchTurn120:
-			{
-				nextState = executeSearchTurn120();
-				break;
-			}
-
-			case NavState::SearchTurn240:
-			{
-				nextState = executeSearchTurn240();
-				break;
-			}
-
-			case NavState::SearchTurn360:
-			{
-				nextState = executeSearchTurn360();
-				break;
-			}
-
-			case NavState::SearchTurn:
-			{
-				nextState = executeSearchTurn();
-				break;
-			}
-
-			case NavState::SearchDrive:
-			{
-				nextState = executeSearchDrive();
-				break;
-			}
-
-			case NavState::TurnToBall:
-			{
-				nextState = executeTurnToBall();
-				break;
-			}
-
-			case NavState::DriveToBall:
-			{
-				nextState = executeDriveToBall();
+				nextState = searcher.run();
 				break;
 			}
 
@@ -696,6 +654,8 @@ Odometry StateMachine::createAvoidancePoint( const double distance )
 // thresholds based on state? waypoint vs ball
 // set distance to go around obstacles?
 // set threshold for when to skip a point?
+
+
 
 // TODOS:
 // [turn to ball | drive to ball] if ball lost, restart search a better way??
