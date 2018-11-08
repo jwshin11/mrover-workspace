@@ -2,6 +2,7 @@
 #define STATE_MACHINE_HPP
 
 #include "rover.hpp"
+#include "searcher.hpp"
 
 #include <lcm/lcm-cpp.hpp>
 #include <queue>
@@ -48,21 +49,7 @@ private:
 
 	NavState executeDrive();
 
-	NavState executeSearchFaceNorth();
-
-	NavState executeSearchTurn120();
-
-	NavState executeSearchTurn240();
-
-	NavState executeSearchTurn360();
-
-	NavState executeSearchTurn();
-
-	NavState executeSearchDrive();
-
-	NavState executeTurnToBall();
-
-	NavState executeDriveToBall();
+	NavState executeSearch();
 
 	NavState executeTurnAroundObs();
 
@@ -89,13 +76,6 @@ private:
 	// Configuration file for the rover.
 	rapidjson::Document mRoverConfig;
 
-	// Queue of search points.
-	queue<Odometry> mSearchPoints;
-
-	// Vector of search point multipliers used as a base for the search
-	// points.
-	vector< pair<short, short> > mSearchPointMultipliers;
-
 	// Odometry point used when avoiding obstacles.
 	Odometry mObstacleAvoidancePoint;
 
@@ -108,11 +88,12 @@ private:
 	// Number of waypoints completed.
 	unsigned mCompletedWaypoints;
 
-	// Number of waypoints missed.
-	unsigned mMissedWaypoints;
-
 	// Indicates if the state changed on a given iteration of run.
 	bool mStateChanged;
+
+	// Search object to control all search states
+	// TODO better way to pass pointer?
+	// Searcher searcher(mPhoebe);
 
 }; // StateMachine
 
