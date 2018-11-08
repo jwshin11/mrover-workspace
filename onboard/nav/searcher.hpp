@@ -1,9 +1,18 @@
+#ifndef SEARCHER_HPP
+#define SEARCHER_HPP
+
+#include "rover.hpp"
+
 class Searcher {
 public:
-
-  Searchstate run();
-
   Searcher();
+  NavState run();
+  // Queue of search points.
+  queue<Odometry> mSearchPoints;
+  void UpdateRover(Rover* rover);
+
+  // Number of waypoints missed.
+  unsigned mMissedWaypoints = 0;
 
 private:
   enum class SearchState
@@ -18,21 +27,34 @@ private:
     DriveToBall
   };
 
-  SearchState executeSearchFaceNorth();
+  NavState executeSearchFaceNorth();
 
-  SearchState executeSearchTurn120();
+  NavState executeSearchTurn120();
 
-  SearchState executeSearchTurn240();
+  NavState executeSearchTurn240();
 
-  SearchState executeSearchTurn360();
+  NavState executeSearchTurn360();
 
-  SearchState executeSearchTurn();
+  NavState executeSearchTurn();
 
-  SearchState executeSearchDrive();
+  NavState executeSearchDrive();
 
-  SearchState executeTurnToBall();
+  NavState executeTurnToBall();
 
-  SearchState executeDriveToBall();
+  NavState executeDriveToBall();
 
-  SearchState currentState();
+  void initializeSearch();
+
+  bool addFourPointsToSearch();
+
+
+  // Vector of search point multipliers used as a base for the search
+  // points.
+  vector< pair<short, short> > mSearchPointMultipliers;
+
+  SearchState currentState;
+
+  Rover * mPhoebe;
 };
+
+#endif //SEARCHER_HPP
