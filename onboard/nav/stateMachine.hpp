@@ -48,21 +48,7 @@ private:
 
 	NavState executeDrive();
 
-	NavState executeSearchFaceNorth();
-
-	NavState executeSearchTurn120();
-
-	NavState executeSearchTurn240();
-
-	NavState executeSearchTurn360();
-
-	NavState executeSearchTurn();
-
-	NavState executeSearchDrive();
-
-	NavState executeTurnToBall();
-
-	NavState executeDriveToBall();
+	Navstate executeSearch();
 
 	NavState executeTurnAroundObs();
 
@@ -113,6 +99,8 @@ private:
 
 	// Indicates if the state changed on a given iteration of run.
 	bool mStateChanged;
+
+	Searcher searcher;
 
 }; // StateMachine
 
