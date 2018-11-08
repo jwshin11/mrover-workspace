@@ -9,6 +9,8 @@
 #include "rover_msgs/NavStatus.hpp"
 #include "utilities.hpp"
 
+Searcher searcher;
+
 // Constructs a StateMachine object with the input lcm object.
 // Reads the configuartion file and constructs a Rover objet with this
 // and the lcmObject. Sets mStateChanged to true so that on the first
@@ -19,7 +21,7 @@ StateMachine::StateMachine( lcm::LCM& lcmObject )
 	, mOriginalObstacleAngle( 0 )
 	, mTotalWaypoints( 0 )
 	, mCompletedWaypoints( 0 )
-	, mMissedWaypoints( 0 )
+	//, mMissedWaypoints( 0 )
 	, mStateChanged( true )
 {
 	ifstream configFile;
@@ -33,7 +35,9 @@ StateMachine::StateMachine( lcm::LCM& lcmObject )
 	configFile.close();
 	mRoverConfig.Parse( config.c_str() );
 	mPhoebe = new Rover( mRoverConfig, lcmObject );
+	searcher.UpdateRover(mPhoebe);
 } // StateMachine()
+
 
 // Destructs the StateMachine object. Deallocates memory for the Rover
 // object.
@@ -81,7 +85,8 @@ void StateMachine::run()
 
 			case NavState::Search:
 			{
-				nextState = searcher.run();
+				//nextState = searcher.run();
+				nextState = NavState::Turn;
 				break;
 			}
 
@@ -154,7 +159,7 @@ void StateMachine::publishNavState() const
 	NavStatus navStatus;
 	navStatus.nav_state = static_cast<int8_t>( mPhoebe->roverStatus().currentState() );
 	navStatus.completed_wps = mCompletedWaypoints;
-	navStatus.missed_wps = mMissedWaypoints;
+	navStatus.missed_wps = searcher.mMissedWaypoints;
 	navStatus.total_wps = mTotalWaypoints;
 	const string& navStatusChannel = mRoverConfig[ "navStatusChannel" ].GetString();
 	mLcmObject.publish( navStatusChannel, &navStatus );
@@ -174,7 +179,7 @@ NavState StateMachine::executeOff()
 	if( mPhoebe->roverStatus().autonState().is_auton )
 	{
 		mCompletedWaypoints = 0;
-		mMissedWaypoints = 0;
+		searcher.mMissedWaypoints = 0;
 		mTotalWaypoints = mPhoebe->roverStatus().course().num_waypoints;
 
 		if( !mTotalWaypoints )
@@ -248,7 +253,7 @@ NavState StateMachine::executeDrive()
 	{
 		if( nextWaypoint.search )
 		{
-			return NavState::SearchFaceNorth;
+			return NavState::Search;
 		}
 		mPhoebe->roverStatus().path().pop();
 		++mCompletedWaypoints;
@@ -261,227 +266,6 @@ NavState StateMachine::executeDrive()
 	// if driveStatus == DriveStatus::OffCourse
 	return NavState::Turn;
 } // executeDrive()
-
-// Executes the logic for turning to face north to orient itself for
-// a search. If the rover is turned off, it proceeds to Off. If the
-// rover detects the tennis ball, it proceeds to the ball If the rover
-// finishes turning, it proceeds to SearchTurn120. Else the rover keeps
-// turning to north.
-NavState StateMachine::executeSearchFaceNorth()
-{
-	if( !mPhoebe->roverStatus().autonState().is_auton )
-	{
-		return NavState::Off;
-	}
-	if( mPhoebe->roverStatus().tennisBall().found )
-	{
-		return NavState::TurnToBall;
-	}
-	if( mPhoebe->turn( 90 ) )
-	{
-		return NavState::SearchTurn120;
-	}
-	return NavState::SearchFaceNorth;
-} // executeSearchFaceNorth
-
-// Executes the logic for the first third of the initial 360 degree
-// turn of the search. If the rover is turned off, the rover proceeds
-// to Off. If the rover detects the tennis ball, it proceeds to the
-// ball. If the rover finishes turning, it proceeds to SearchTurn240.
-// Else the rover keeps turning to 120 degrees.
-NavState StateMachine::executeSearchTurn120()
-{
-	if( !mPhoebe->roverStatus().autonState().is_auton )
-	{
-		return NavState::Off;
-	}
-	if( mPhoebe->roverStatus().tennisBall().found )
-	{
-		return NavState::TurnToBall;
-	}
-	if( mPhoebe->turn( 210 ) )
-	{
-		return NavState::SearchTurn240;
-	}
-	return NavState::SearchTurn120;
-} // executeSearchTurn120()
-
-// Executes the logic for the second third of the initial 360 degree
-// turn of the search. If the rover is turned off, the rover proceeds
-// to Off. If the rover detects the tennis ball, it proceeds to the
-// ball. If the rover finishes turning, it proceeds to SearchTurn360.
-// Else the rover keeps turning to 240 degrees.
-NavState StateMachine::executeSearchTurn240()
-{
-	if( !mPhoebe->roverStatus().autonState().is_auton )
-	{
-		return NavState::Off;
-	}
-	if( mPhoebe->roverStatus().tennisBall().found )
-	{
-		return NavState::TurnToBall;
-	}
-	if( mPhoebe->turn( 330 ) )
-	{
-		return NavState::SearchTurn360;
-	}
-	return NavState::SearchTurn240;
-} // executeSearchTurn240
-
-// Executes the logic for the final third of the initial 360 degree
-// turn of the search. If the rover is turned off, the rover proceeds
-// to Off. If the rover detects the tennis ball, it proceeds to the
-// ball. If the rover finishes turning, the next state is SearchDrive.
-// Else the rover keeps turning to 360 degrees.
-NavState StateMachine::executeSearchTurn360()
-{
-	if( !mPhoebe->roverStatus().autonState().is_auton )
-	{
-		return NavState::Off;
-	}
-	if( mPhoebe->roverStatus().tennisBall().found )
-	{
-		return NavState::TurnToBall;
-	}
-	if( mPhoebe->turn( 90 ) )
-	{
-		initializeSearch();
-		return NavState::SearchTurn;
-	}
-	return NavState::SearchTurn360;
-} // executeSearchTurn360()
-
-// Executes the logic for turning while searching. If the rover is
-// turned off, the rover proceeds to Off. If the rover detects the
-// tennis ball, it proceeds to the ball. If the rover finishes turning,
-// it proceeds to driving while searching. Else the rover keeps
-// turning to the next Waypoint.
-NavState StateMachine::executeSearchTurn()
-{
-	if( !mPhoebe->roverStatus().autonState().is_auton )
-	{
-		return NavState::Off;
-	}
-	if( mPhoebe->roverStatus().tennisBall().found )
-	{
-		return NavState::TurnToBall;
-	}
-	if( mSearchPoints.empty() )
-	{
-		if( !addFourPointsToSearch() )
-		{
-			mPhoebe->roverStatus().path().pop();
-			++mMissedWaypoints;
-			return NavState::Turn;
-		}
-		// return NavState::SearchTurn;
-	}
-
-	Odometry& nextSearchPoint = mSearchPoints.front();
-	if( mPhoebe->turn( nextSearchPoint ) )
-	{
-		return NavState::SearchDrive;
-	}
-	return NavState::SearchTurn;
-} // executeSearchTurn()
-
-// Executes the logic for driving while searching. If the rover is
-// turned off, the rover proceeds to Off. If the rover detects the
-// tennis ball, it proceeds to the ball. If the rover finishes driving,
-// it proceeds to turning to the next Waypoint. If the rover detects
-// an obstacle, it proceeds to obstacle avoidance. Else the rover
-// keeps driving to the next Waypoint.
-NavState StateMachine::executeSearchDrive()
-{
-	if( !mPhoebe->roverStatus().autonState().is_auton )
-	{
-		return NavState::Off;
-	}
-	if( mPhoebe->roverStatus().tennisBall().found )
-	{
-		return NavState::TurnToBall;
-	}
-	if( mPhoebe->roverStatus().obstacle().detected )
-	{
-		mOriginalObstacleAngle = mPhoebe->roverStatus().obstacle().bearing;
-		return NavState::SearchTurnAroundObs;
-	}
-
-	const Odometry& nextSearchPoint = mSearchPoints.front();
-	DriveStatus driveStatus = mPhoebe->drive( nextSearchPoint );
-	if( driveStatus == DriveStatus::Arrived )
-	{
-		mSearchPoints.pop();
-		return NavState::SearchTurn;
-	}
-	if( driveStatus == DriveStatus::OnCourse )
-	{
-		return NavState::SearchDrive;
-	}
-	// if driveStatus == DriveStatus::OffCourse
-	return NavState::SearchTurn;
-} // executeSearchDrive()
-
-// Executes the logic for turning to the tennis ball. If the rover is
-// turned off, it proceeds to Off. If the rover loses the ball, it
-// starts to search again. If the rover finishes turning to the ball,
-// it drives to the ball. Else the rover continues to turn to to the
-// ball.
-NavState StateMachine::executeTurnToBall()
-{
-	if( !mPhoebe->roverStatus().autonState().is_auton )
-	{
-		return NavState::Off;
-	}
-	if( !mPhoebe->roverStatus().tennisBall().found )
-	{
-		return NavState::SearchFaceNorth;
-	}
-	if( mPhoebe->turn( mPhoebe->roverStatus().tennisBall().bearing ) )
-	{
-		return NavState::DriveToBall;
-	}
-	return NavState::TurnToBall;
-} // executeTurnToBall()
-
-// Executes the logic for driving to the tennis ball. If the rover is
-// turned off, it proceeds to Off. If the rover loses the ball, it
-// starts the search again. If the rover detects an obstacle, it
-// proceeds to go around the obstacle. If the rover finishes driving
-// to the ball, it moves on to the next Waypoint. If the rover gets
-// off course, it proceeds to turn back to the Waypoint. Else, it
-// continues driving to the ball.
-NavState StateMachine::executeDriveToBall()
-{
-	if( !mPhoebe->roverStatus().autonState().is_auton )
-	{
-		return NavState::Off;
-	}
-	if( !mPhoebe->roverStatus().tennisBall().found )
-	{
-		return NavState::SearchFaceNorth;
-	}
-	// TODO: save location of ball then go around object?
-	if( mPhoebe->roverStatus().obstacle().detected )
-	{
-		mOriginalObstacleAngle = mPhoebe->roverStatus().obstacle().bearing;
-		return NavState::SearchTurnAroundObs;
-	}
-	DriveStatus driveStatus = mPhoebe->drive( mPhoebe->roverStatus().tennisBall().distance,
-											mPhoebe->roverStatus().tennisBall().bearing );
-	if( driveStatus == DriveStatus::Arrived )
-	{
-		mPhoebe->roverStatus().path().pop();
-		++mCompletedWaypoints;
-		return NavState::Turn;
-	}
-	if( driveStatus == DriveStatus::OnCourse )
-	{
-		return NavState::DriveToBall;
-	}
-	// if driveStatus == DriveStatus::OffCourse
-	return NavState::TurnToBall;
-} // executeDriveToBall()
 
 // Executes the logic for turning around an obstacle. If the rover is
 // turned off, it proceeds to Off. If the tennis ball is detected, the
@@ -501,7 +285,7 @@ NavState StateMachine::executeTurnAroundObs()
 	}
 	if( mPhoebe->roverStatus().tennisBall().found )
 	{
-		return NavState::TurnToBall;
+		return NavState::Search;
 	}
 
 	double cvThresh = mRoverConfig[ "cvThresh" ].GetDouble();
@@ -510,15 +294,15 @@ NavState StateMachine::executeTurnAroundObs()
 							 mPhoebe->roverStatus().odometry() ) < 2 * cvThresh ) )
 	{
 		mPhoebe->roverStatus().path().pop();
-		++mMissedWaypoints;
+		searcher.mMissedWaypoints += 1;
 		return NavState::Turn;
 	}
 	if( ( mPhoebe->roverStatus().currentState() == NavState::SearchTurnAroundObs ) &&
-		( estimateNoneuclid( mSearchPoints.front(), mPhoebe->roverStatus().odometry() )
+		( estimateNoneuclid( searcher.mSearchPoints.front(), mPhoebe->roverStatus().odometry() )
 		  < 2 * cvThresh ) )
 	{
-		mSearchPoints.pop();
-		return NavState::SearchTurn;
+		searcher.mSearchPoints.pop();
+		return NavState::Search;
 	}
 	if( !mPhoebe->roverStatus().obstacle().detected )
 	{
@@ -558,7 +342,7 @@ NavState StateMachine::executeDriveAroundObs()
 			printf("here2\n");
 			return NavState::TurnAroundObs;
 		}
-		return NavState::SearchTurnAroundObs;
+		return NavState::Search;
 	}
 
 	DriveStatus driveStatus = mPhoebe->drive( mObstacleAvoidancePoint );
@@ -568,7 +352,7 @@ NavState StateMachine::executeDriveAroundObs()
 		{
 			return NavState::Turn;
 		}
-		return NavState::SearchTurn;
+		return NavState::Search;
 	}
 	if( driveStatus == DriveStatus::OnCourse )
 	{
@@ -582,56 +366,6 @@ NavState StateMachine::executeDriveAroundObs()
 	return NavState::SearchTurnAroundObs;
 } // executeDriveAroundObs()
 
-// Initializes the search ponit multipliers to be the intermost loop
-// of the search.
-void StateMachine::initializeSearch()
-{
-	clear( mSearchPoints );
-	mSearchPointMultipliers.clear();
-	mSearchPointMultipliers.push_back( pair<short, short> ( 0, 1 ) );
-	mSearchPointMultipliers.push_back( pair<short, short> ( -1, 1 ) );
-	mSearchPointMultipliers.push_back( pair<short, short> ( -1, -1 ) );
-	mSearchPointMultipliers.push_back( pair<short, short> ( 1, -1 ) );
-	addFourPointsToSearch();
-} // initializeSearch()
-
-// true indicates to added search points
-
-// Add the next loop to the search. If the points are added to the
-// search, returns true. If the rover is further away from the start
-// of the search than the search bail threshold, return false.
-bool StateMachine::addFourPointsToSearch()
-{
-	const double pathWidth = mRoverConfig[ "pathWidth" ].GetDouble();
-	if( mSearchPointMultipliers[ 0 ].second * pathWidth > mRoverConfig[ "searchBailThresh" ].GetDouble() )
-	{
-		return false;
-	}
-
-	for( auto& mSearchPointMultiplier : mSearchPointMultipliers )
-	{
-		Odometry nextSearchPoint = mPhoebe->roverStatus().path().front().odom;
-		double totalLatitudeMinutes = nextSearchPoint.latitude_min +
-			( mSearchPointMultiplier.first * pathWidth  * LAT_METER_IN_MINUTES );
-		double totalLongitudeMinutes = nextSearchPoint.longitude_min +
-			( mSearchPointMultiplier.second * pathWidth * mPhoebe->longMeterInMinutes() );
-
-		nextSearchPoint.latitude_deg += totalLatitudeMinutes / 60;
-		// nextSearchPoint.latitude_min += mod( totalLatitudeMinutes, 60 );
-		// printf("%f\n", nextSearchPoint.latitude_min);
-		nextSearchPoint.latitude_min = ( totalLatitudeMinutes - ( ( (int) totalLatitudeMinutes ) / 60 ) * 60 );
-		// printf("%f\n", nextSearchPoint.latitude_min);
-		nextSearchPoint.longitude_deg += totalLongitudeMinutes / 60;
-		// nextSearchPoint.longitude_min += mod( totalLongitudeMinutes, 60 );
-		nextSearchPoint.longitude_min = ( totalLongitudeMinutes - ( ( (int) totalLongitudeMinutes) / 60 ) * 60 );
-
-		mSearchPoints.push( nextSearchPoint );
-
-		mSearchPointMultiplier.first < 0 ? --mSearchPointMultiplier.first : ++mSearchPointMultiplier.first;
-		mSearchPointMultiplier.second < 0 ? --mSearchPointMultiplier.second : ++mSearchPointMultiplier.second;
-	}
-	return true;
-} // addFourPointsToSearch()
 
 // Creates the odometry point to use to drive around in obstacle
 // avoidance.

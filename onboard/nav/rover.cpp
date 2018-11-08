@@ -183,6 +183,8 @@ void Rover::stop()
 // Checks if the rover should be updated based on what information in
 // the rover's status has changed. Returns true if the rover was
 // updated, false otherwise.
+// TODO: unconditionally update everygthing. When abstracting search class
+// we got rid of NavStates TurnToBall and DriveToBall (oops) fix this soon :P
 bool Rover::updateRover( RoverStatus newRoverStatus )
 {
 	// Rover currently on.
@@ -194,39 +196,44 @@ bool Rover::updateRover( RoverStatus newRoverStatus )
 			mRoverStatus.autonState() = newRoverStatus.autonState();
 			return true;
 		}
-
-		if( ( mRoverStatus.currentState() == NavState::TurnToBall ||
-			  mRoverStatus.currentState() == NavState::DriveToBall ) &&
-			!isEqual( mRoverStatus.tennisBall(), newRoverStatus.tennisBall() ) )
-		{
-			mRoverStatus.obstacle() = newRoverStatus.obstacle();
-			mRoverStatus.odometry() = newRoverStatus.odometry();
-			mRoverStatus.tennisBall() = newRoverStatus.tennisBall();
-			return true;
-		}
-
-		if( ( mRoverStatus.currentState() == NavState::TurnAroundObs ||
-				   mRoverStatus.currentState() == NavState::SearchTurnAroundObs ) &&
-				 !isEqual( mRoverStatus.obstacle(), newRoverStatus.obstacle() ) )
-		{
-			mRoverStatus.obstacle() = newRoverStatus.obstacle();
-			mRoverStatus.odometry() = newRoverStatus.odometry();
-			mRoverStatus.tennisBall() = newRoverStatus.tennisBall();
-			return true;
-		}
-
-		// std::cout << mRoverStatus.odometry().bearing_deg << " " << newRoverStatus.odometry().bearing_deg << "\n";
-
-		if( !isEqual( mRoverStatus.obstacle(), newRoverStatus.obstacle() ) ||
-			!isEqual( mRoverStatus.odometry(), newRoverStatus.odometry() ) ||
-			!isEqual( mRoverStatus.tennisBall(), newRoverStatus.tennisBall() ) )
-		{
-			mRoverStatus.obstacle() = newRoverStatus.obstacle();
-			mRoverStatus.odometry() = newRoverStatus.odometry();
-			mRoverStatus.tennisBall() = newRoverStatus.tennisBall();
-			return true;
-		}
+		//  {
+		// 	mRoverStatus.obstacle() = newRoverStatus.obstacle();
+		// 	mRoverStatus.odometry() = newRoverStatus.odometry();
+		// 	mRoverStatus.tennisBall() = newRoverStatus.tennisBall();
+		// }
 		return false;
+		// if( ( mRoverStatus.currentState() == NavState::TurnToBall ||
+		// 	  mRoverStatus.currentState() == NavState::DriveToBall ) &&
+		// 	!isEqual( mRoverStatus.tennisBall(), newRoverStatus.tennisBall() ) )
+		// {
+		// 	mRoverStatus.obstacle() = newRoverStatus.obstacle();
+		// 	mRoverStatus.odometry() = newRoverStatus.odometry();
+		// 	mRoverStatus.tennisBall() = newRoverStatus.tennisBall();
+		// 	return true;
+		// }
+		//
+		// if( ( mRoverStatus.currentState() == NavState::TurnAroundObs ||
+		// 		   mRoverStatus.currentState() == NavState::SearchTurnAroundObs ) &&
+		// 		 !isEqual( mRoverStatus.obstacle(), newRoverStatus.obstacle() ) )
+		// {
+		// 	mRoverStatus.obstacle() = newRoverStatus.obstacle();
+		// 	mRoverStatus.odometry() = newRoverStatus.odometry();
+		// 	mRoverStatus.tennisBall() = newRoverStatus.tennisBall();
+		// 	return true;
+		// }
+		//
+		// // std::cout << mRoverStatus.odometry().bearing_deg << " " << newRoverStatus.odometry().bearing_deg << "\n";
+		//
+		// if( !isEqual( mRoverStatus.obstacle(), newRoverStatus.obstacle() ) ||
+		// 	!isEqual( mRoverStatus.odometry(), newRoverStatus.odometry() ) ||
+		// 	!isEqual( mRoverStatus.tennisBall(), newRoverStatus.tennisBall() ) )
+		// {
+		// 	mRoverStatus.obstacle() = newRoverStatus.obstacle();
+		// 	mRoverStatus.odometry() = newRoverStatus.odometry();
+		// 	mRoverStatus.tennisBall() = newRoverStatus.tennisBall();
+		// 	return true;
+		// }
+		// return false;
 	}
 
 	// Rover currently off.

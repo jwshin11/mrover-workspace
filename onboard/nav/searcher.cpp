@@ -1,57 +1,65 @@
-Searcher::Searcher()
-  :currentState(SearchFaceNorth)  { }
+#include "searcher.hpp"
+#include "utilities.hpp"
 
-Navstate Searcher::run()
+Searcher::Searcher()
+  : currentState(SearchState::SearchFaceNorth) { }
+
+void Searcher::UpdateRover(Rover * rover)
+{
+    mPhoebe = rover;
+}
+NavState Searcher::run()
 {
   switch (currentState)
     {
-    case State::SearchFaceNorth:
+    case SearchState::SearchFaceNorth:
     {
       return executeSearchFaceNorth();
 
     }
 
-    case State::SearchTurn120:
+    case SearchState::SearchTurn120:
     {
       return executeSearchTurn120();
 
     }
 
-    case State::SearchTurn240:
+    case SearchState::SearchTurn240:
     {
       return executeSearchTurn240();
 
     }
 
-    case State::SearchTurn360:
+    case SearchState::SearchTurn360:
     {
       return executeSearchTurn360();
 
     }
 
-    case State::SearchTurn:
+    case SearchState::SearchTurn:
     {
       return executeSearchTurn();
 
     }
 
-    case State::SearchDrive:
+    case SearchState::SearchDrive:
     {
       return executeSearchDrive();
 
     }
 
-    case State::TurnToBall:
+    case SearchState::TurnToBall:
     {
       return executeTurnToBall();
 
     }
 
-    case State::DriveToBall:
+    case SearchState::DriveToBall:
     {
       return executeDriveToBall();
-
     }
+
+    return NavState::Unknown;
   }
 }
 
@@ -195,7 +203,7 @@ NavState Searcher::executeSearchTurn()
     currentState = SearchState::SearchDrive;
     return NavState::Search;
 	}
-  currentState = SearchState::Turn;
+  currentState = SearchState::SearchTurn;
   return NavState::Search;
 } // executeSearchTurn()
 
@@ -205,7 +213,7 @@ NavState Searcher::executeSearchTurn()
 // it proceeds to turning to the next Waypoint. If the rover detects
 // an obstacle, it proceeds to obstacle avoidance. Else the rover
 // keeps driving to the next Waypoint.
-State Searcher::executeSearchDrive()
+NavState Searcher::executeSearchDrive()
 {
 	if( !mPhoebe->roverStatus().autonState().is_auton )
 	{
@@ -219,7 +227,8 @@ State Searcher::executeSearchDrive()
 	}
 	if( mPhoebe->roverStatus().obstacle().detected )
 	{
-		mOriginalObstacleAngle = mPhoebe->roverStatus().obstacle().bearing;
+        // TODO find way to return obstacle bearing
+        // mOriginalObstacleAngle = mPhoebe->roverStatus().obstacle().bearing;
     currentState = SearchState::SearchTurn;
 		return NavState::SearchTurnAroundObs;
 	}
@@ -247,7 +256,7 @@ State Searcher::executeSearchDrive()
 // starts to search again. If the rover finishes turning to the ball,
 // it drives to the ball. Else the rover continues to turn to to the
 // ball.
-State Searcher::executeTurnToBall()
+NavState Searcher::executeTurnToBall()
 {
 	if( !mPhoebe->roverStatus().autonState().is_auton )
 	{
@@ -275,7 +284,7 @@ State Searcher::executeTurnToBall()
 // to the ball, it moves on to the next Waypoint. If the rover gets
 // off course, it proceeds to turn back to the Waypoint. Else, it
 // continues driving to the ball.
-State Searcher::executeDriveToBall()
+NavState Searcher::executeDriveToBall()
 {
 	if( !mPhoebe->roverStatus().autonState().is_auton )
 	{
@@ -290,7 +299,8 @@ State Searcher::executeDriveToBall()
 	// TODO: save location of ball then go around object?
 	if( mPhoebe->roverStatus().obstacle().detected )
 	{
-		mOriginalObstacleAngle = mPhoebe->roverStatus().obstacle().bearing;
+        // TODO find way to return obstacle bearing
+        //mOriginalObstacleAngle = mPhoebe->roverStatus().obstacle().bearing;
     currentState = SearchState::SearchFaceNorth;
 		return NavState::SearchTurnAroundObs;
 	}
@@ -299,7 +309,8 @@ State Searcher::executeDriveToBall()
 	if( driveStatus == DriveStatus::Arrived )
 	{
 		mPhoebe->roverStatus().path().pop();
-		++mCompletedWaypoints;
+        // TODO find way to increment waypont
+        //++mCompletedWaypoints;
     currentState = SearchState::SearchFaceNorth;
 		return NavState::Turn;
 	}
@@ -312,3 +323,54 @@ State Searcher::executeDriveToBall()
   currentState = SearchState::TurnToBall;
   return NavState::Search;
 } // executeDriveToBall()
+
+// Initializes the search ponit multipliers to be the intermost loop
+// of the search.
+void Searcher::initializeSearch()
+{
+	clear( mSearchPoints );
+	mSearchPointMultipliers.clear();
+	mSearchPointMultipliers.push_back( pair<short, short> ( 0, 1 ) );
+	mSearchPointMultipliers.push_back( pair<short, short> ( -1, 1 ) );
+	mSearchPointMultipliers.push_back( pair<short, short> ( -1, -1 ) );
+	mSearchPointMultipliers.push_back( pair<short, short> ( 1, -1 ) );
+	addFourPointsToSearch();
+} // initializeSearch()
+
+// true indicates to added search points
+
+// Add the next loop to the search. If the points are added to the
+// search, returns true. If the rover is further away from the start
+// of the search than the search bail threshold, return false.
+bool Searcher::addFourPointsToSearch()
+{
+	const double pathWidth = mRoverConfig[ "pathWidth" ].GetDouble();
+	if( mSearchPointMultipliers[ 0 ].second * pathWidth > mRoverConfig[ "searchBailThresh" ].GetDouble() )
+	{
+		return false;
+	}
+
+	for( auto& mSearchPointMultiplier : mSearchPointMultipliers )
+	{
+		Odometry nextSearchPoint = mPhoebe->roverStatus().path().front().odom;
+		double totalLatitudeMinutes = nextSearchPoint.latitude_min +
+			( mSearchPointMultiplier.first * pathWidth  * LAT_METER_IN_MINUTES );
+		double totalLongitudeMinutes = nextSearchPoint.longitude_min +
+			( mSearchPointMultiplier.second * pathWidth * mPhoebe->longMeterInMinutes() );
+
+		nextSearchPoint.latitude_deg += totalLatitudeMinutes / 60;
+		// nextSearchPoint.latitude_min += mod( totalLatitudeMinutes, 60 );
+		// printf("%f\n", nextSearchPoint.latitude_min);
+		nextSearchPoint.latitude_min = ( totalLatitudeMinutes - ( ( (int) totalLatitudeMinutes ) / 60 ) * 60 );
+		// printf("%f\n", nextSearchPoint.latitude_min);
+		nextSearchPoint.longitude_deg += totalLongitudeMinutes / 60;
+		// nextSearchPoint.longitude_min += mod( totalLongitudeMinutes, 60 );
+		nextSearchPoint.longitude_min = ( totalLongitudeMinutes - ( ( (int) totalLongitudeMinutes) / 60 ) * 60 );
+
+		mSearchPoints.push( nextSearchPoint );
+
+		mSearchPointMultiplier.first < 0 ? --mSearchPointMultiplier.first : ++mSearchPointMultiplier.first;
+		mSearchPointMultiplier.second < 0 ? --mSearchPointMultiplier.second : ++mSearchPointMultiplier.second;
+	}
+	return true;
+} // addFourPointsToSearch()
