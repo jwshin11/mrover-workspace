@@ -9,8 +9,6 @@
 #include "rover_msgs/NavStatus.hpp"
 #include "utilities.hpp"
 
-Searcher searcher;
-
 // Constructs a StateMachine object with the input lcm object.
 // Reads the configuartion file and constructs a Rover objet with this
 // and the lcmObject. Sets mStateChanged to true so that on the first
@@ -23,6 +21,7 @@ StateMachine::StateMachine( lcm::LCM& lcmObject )
 	, mCompletedWaypoints( 0 )
 	//, mMissedWaypoints( 0 )
 	, mStateChanged( true )
+	, searcher(this)
 {
 	ifstream configFile;
 	configFile.open( "/vagrant/onboard/nav/config.json" );
@@ -35,7 +34,6 @@ StateMachine::StateMachine( lcm::LCM& lcmObject )
 	configFile.close();
 	mRoverConfig.Parse( config.c_str() );
 	mPhoebe = new Rover( mRoverConfig, lcmObject );
-	searcher.UpdateRover(mPhoebe);
 } // StateMachine()
 
 
@@ -85,8 +83,7 @@ void StateMachine::run()
 
 			case NavState::Search:
 			{
-				//nextState = searcher.run();
-				nextState = NavState::Turn;
+				nextState = searcher.run();
 				break;
 			}
 
@@ -164,11 +161,6 @@ void StateMachine::publishNavState() const
 	const string& navStatusChannel = mRoverConfig[ "navStatusChannel" ].GetString();
 	mLcmObject.publish( navStatusChannel, &navStatus );
 } // publishNavState()
-
-// void StateMachine::printNavState() const
-// {
-// 	// switch
-// }
 
 // Executes the logic for off. If the rover is turned on, it updates
 // the roverStatus. If the course is empty, the rover is done  with

@@ -35,6 +35,8 @@ public:
 
 	void updateRoverStatus( TennisBall tennisBall );
 
+	friend class Searcher;
+
 private:
 	/*************************************************************************/
 	/* Private Member Functions */
@@ -92,8 +94,7 @@ private:
 	bool mStateChanged;
 
 	// Search object to control all search states
-	// TODO better way to pass pointer?
-	// Searcher searcher(mPhoebe);
+	Searcher searcher;
 
 }; // StateMachine
 
