@@ -196,44 +196,40 @@ bool Rover::updateRover( RoverStatus newRoverStatus )
 			mRoverStatus.autonState() = newRoverStatus.autonState();
 			return true;
 		}
-		//  {
-		// 	mRoverStatus.obstacle() = newRoverStatus.obstacle();
-		// 	mRoverStatus.odometry() = newRoverStatus.odometry();
-		// 	mRoverStatus.tennisBall() = newRoverStatus.tennisBall();
-		// }
+
+		if( mRoverStatus.currentState() == NavState::Search ) 
+		//	||
+		// 	  mRoverStatus.currentState() == NavState::Search ) &&
+		// 	!isEqual( mRoverStatus.tennisBall(), newRoverStatus.tennisBall() ) )
+		{
+			mRoverStatus.obstacle() = newRoverStatus.obstacle();
+			mRoverStatus.odometry() = newRoverStatus.odometry();
+			mRoverStatus.tennisBall() = newRoverStatus.tennisBall();
+			return true;
+		}
+
+		if( ( mRoverStatus.currentState() == NavState::TurnAroundObs ||
+				   mRoverStatus.currentState() == NavState::SearchTurnAroundObs ) &&
+				 !isEqual( mRoverStatus.obstacle(), newRoverStatus.obstacle() ) )
+		{
+			mRoverStatus.obstacle() = newRoverStatus.obstacle();
+			mRoverStatus.odometry() = newRoverStatus.odometry();
+			mRoverStatus.tennisBall() = newRoverStatus.tennisBall();
+			return true;
+		}
+
+		// std::cout << mRoverStatus.odometry().bearing_deg << " " << newRoverStatus.odometry().bearing_deg << "\n";
+
+		if( !isEqual( mRoverStatus.obstacle(), newRoverStatus.obstacle() ) ||
+			!isEqual( mRoverStatus.odometry(), newRoverStatus.odometry() ) ||
+			!isEqual( mRoverStatus.tennisBall(), newRoverStatus.tennisBall() ) )
+		{
+			mRoverStatus.obstacle() = newRoverStatus.obstacle();
+			mRoverStatus.odometry() = newRoverStatus.odometry();
+			mRoverStatus.tennisBall() = newRoverStatus.tennisBall();
+			return true;
+		}
 		return false;
-		// if( ( mRoverStatus.currentState() == NavState::TurnToBall ||
-		// 	  mRoverStatus.currentState() == NavState::DriveToBall ) &&
-		// 	!isEqual( mRoverStatus.tennisBall(), newRoverStatus.tennisBall() ) )
-		// {
-		// 	mRoverStatus.obstacle() = newRoverStatus.obstacle();
-		// 	mRoverStatus.odometry() = newRoverStatus.odometry();
-		// 	mRoverStatus.tennisBall() = newRoverStatus.tennisBall();
-		// 	return true;
-		// }
-		//
-		// if( ( mRoverStatus.currentState() == NavState::TurnAroundObs ||
-		// 		   mRoverStatus.currentState() == NavState::SearchTurnAroundObs ) &&
-		// 		 !isEqual( mRoverStatus.obstacle(), newRoverStatus.obstacle() ) )
-		// {
-		// 	mRoverStatus.obstacle() = newRoverStatus.obstacle();
-		// 	mRoverStatus.odometry() = newRoverStatus.odometry();
-		// 	mRoverStatus.tennisBall() = newRoverStatus.tennisBall();
-		// 	return true;
-		// }
-		//
-		// // std::cout << mRoverStatus.odometry().bearing_deg << " " << newRoverStatus.odometry().bearing_deg << "\n";
-		//
-		// if( !isEqual( mRoverStatus.obstacle(), newRoverStatus.obstacle() ) ||
-		// 	!isEqual( mRoverStatus.odometry(), newRoverStatus.odometry() ) ||
-		// 	!isEqual( mRoverStatus.tennisBall(), newRoverStatus.tennisBall() ) )
-		// {
-		// 	mRoverStatus.obstacle() = newRoverStatus.obstacle();
-		// 	mRoverStatus.odometry() = newRoverStatus.odometry();
-		// 	mRoverStatus.tennisBall() = newRoverStatus.tennisBall();
-		// 	return true;
-		// }
-		// return false;
 	}
 
 	// Rover currently off.

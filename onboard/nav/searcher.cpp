@@ -1,66 +1,68 @@
 #include "searcher.hpp"
 #include "utilities.hpp"
+#include "StateMachine.hpp"
 
-Searcher::Searcher()
-  : currentState(SearchState::SearchFaceNorth) { }
+#include <iostream>
 
-void Searcher::UpdateRover(Rover * rover)
-{
-    mPhoebe = rover;
-}
+Searcher::Searcher(StateMachine* stateMachine_)
+  : currentState(SearchState::SearchFaceNorth)
+  , stateMachine(stateMachine_) { }
+
+
 NavState Searcher::run()
-{
-  switch (currentState)
-    {
-    case SearchState::SearchFaceNorth:
-    {
-      return executeSearchFaceNorth();
+{ 
+	switch (currentState)
+	{
+	    case SearchState::SearchFaceNorth:
+	    {
+	      return executeSearchFaceNorth();
 
-    }
+	    }
 
-    case SearchState::SearchTurn120:
-    {
-      return executeSearchTurn120();
+	    case SearchState::SearchTurn120:
+	    {
+	      return executeSearchTurn120();
 
-    }
+	    }
 
-    case SearchState::SearchTurn240:
-    {
-      return executeSearchTurn240();
+	    case SearchState::SearchTurn240:
+	    {
+	      return executeSearchTurn240();
 
-    }
+	    }
 
-    case SearchState::SearchTurn360:
-    {
-      return executeSearchTurn360();
+	    case SearchState::SearchTurn360:
+	    {
+	      return executeSearchTurn360();
 
-    }
+	    }
 
-    case SearchState::SearchTurn:
-    {
-      return executeSearchTurn();
+	    case SearchState::SearchTurn:
+	    {
+	      return executeSearchTurn();
 
-    }
+	    }
 
-    case SearchState::SearchDrive:
-    {
-      return executeSearchDrive();
+	    case SearchState::SearchDrive:
+	    {
+	      return executeSearchDrive();
 
-    }
+	    }
 
-    case SearchState::TurnToBall:
-    {
-      return executeTurnToBall();
+	    case SearchState::TurnToBall:
+	    {
+	      return executeTurnToBall();
 
-    }
+	    }
 
-    case SearchState::DriveToBall:
-    {
-      return executeDriveToBall();
-    }
+	    case SearchState::DriveToBall:
+	    {
+	      return executeDriveToBall();
+	    }
 
-    return NavState::Unknown;
-  }
+	} // switch
+	
+	return NavState::Unknown;
 }
 
 // Executes the logic for turning to face north to orient itself for
@@ -70,22 +72,23 @@ NavState Searcher::run()
 // turning to north.
 NavState Searcher::executeSearchFaceNorth()
 {
-	if( !mPhoebe->roverStatus().autonState().is_auton )
+	if( !stateMachine->mPhoebe->roverStatus().autonState().is_auton )
 	{
-    currentState = SearchState::SearchFaceNorth;
+    	currentState = SearchState::SearchFaceNorth;
 		return NavState::Off;
 	}
-	if( mPhoebe->roverStatus().tennisBall().found )
+	if( stateMachine->mPhoebe->roverStatus().tennisBall().found )
 	{
-    currentState = SearchState::TurnToBall;
+    	currentState = SearchState::TurnToBall;
 		return NavState::Search;
 	}
-	if( mPhoebe->turn( 90 ) )
+	if( stateMachine->mPhoebe->turn( 90 ) )
 	{
-    currentState = SearchState::SearchTurn120;
+    	currentState = SearchState::SearchTurn120;
 		return NavState::Search;
 	}
-  currentState = SearchState::SearchFaceNorth;
+  	
+  	currentState = SearchState::SearchFaceNorth;
 	return NavState::Search;
 } // executeSearchFaceNorth
 
@@ -96,17 +99,17 @@ NavState Searcher::executeSearchFaceNorth()
 // Else the rover keeps turning to 120 degrees.
 NavState Searcher::executeSearchTurn120()
 {
-	if( !mPhoebe->roverStatus().autonState().is_auton )
+	if( !stateMachine->mPhoebe->roverStatus().autonState().is_auton )
 	{
     currentState = SearchState::SearchFaceNorth;
 		return NavState::Off;
 	}
-	if( mPhoebe->roverStatus().tennisBall().found )
+	if( stateMachine->mPhoebe->roverStatus().tennisBall().found )
 	{
     currentState = SearchState::TurnToBall;
 		return NavState::Search;
 	}
-	if( mPhoebe->turn( 210 ) )
+	if( stateMachine->mPhoebe->turn( 210 ) )
 	{
     currentState = SearchState::SearchTurn240;
 		return NavState::Search;
@@ -122,17 +125,17 @@ NavState Searcher::executeSearchTurn120()
 // Else the rover keeps turning to 240 degrees.
 NavState Searcher::executeSearchTurn240()
 {
-	if( !mPhoebe->roverStatus().autonState().is_auton )
+	if( !stateMachine->mPhoebe->roverStatus().autonState().is_auton )
 	{
     currentState = SearchState::SearchFaceNorth;
 		return NavState::Off;
 	}
-	if( mPhoebe->roverStatus().tennisBall().found )
+	if( stateMachine->mPhoebe->roverStatus().tennisBall().found )
 	{
     currentState = SearchState::TurnToBall;
     return NavState::Search;
 	}
-	if( mPhoebe->turn( 330 ) )
+	if( stateMachine->mPhoebe->turn( 330 ) )
 	{
     currentState = SearchState::SearchTurn360;
     return NavState::Search;
@@ -148,17 +151,17 @@ NavState Searcher::executeSearchTurn240()
 // Else the rover keeps turning to 360 degrees.
 NavState Searcher::executeSearchTurn360()
 {
-	if( !mPhoebe->roverStatus().autonState().is_auton )
+	if( !stateMachine->mPhoebe->roverStatus().autonState().is_auton )
 	{
     currentState = SearchState::SearchFaceNorth;
 		return NavState::Off;
 	}
-	if( mPhoebe->roverStatus().tennisBall().found )
+	if( stateMachine->mPhoebe->roverStatus().tennisBall().found )
 	{
     currentState = SearchState::TurnToBall;
     return NavState::Search;
 	}
-	if( mPhoebe->turn( 90 ) )
+	if( stateMachine->mPhoebe->turn( 90 ) )
 	{
 		initializeSearch();
     currentState = SearchState::SearchTurn;
@@ -175,12 +178,12 @@ NavState Searcher::executeSearchTurn360()
 // turning to the next Waypoint.
 NavState Searcher::executeSearchTurn()
 {
-	if( !mPhoebe->roverStatus().autonState().is_auton )
+	if( !stateMachine->mPhoebe->roverStatus().autonState().is_auton )
 	{
     currentState = SearchState::SearchFaceNorth;
 		return NavState::Off;
 	}
-	if( mPhoebe->roverStatus().tennisBall().found )
+	if( stateMachine->mPhoebe->roverStatus().tennisBall().found )
 	{
     currentState = SearchState::TurnToBall;
     return NavState::Search;
@@ -189,16 +192,15 @@ NavState Searcher::executeSearchTurn()
 	{
 		if( !addFourPointsToSearch() )
 		{
-			mPhoebe->roverStatus().path().pop();
+			stateMachine->mPhoebe->roverStatus().path().pop();
 			++mMissedWaypoints;
-      currentState = SearchState::SearchFaceNorth;
+      		currentState = SearchState::SearchFaceNorth;
 			return NavState::Turn;
 		}
-		// return State::SearchTurn;
 	}
 
 	Odometry& nextSearchPoint = mSearchPoints.front();
-	if( mPhoebe->turn( nextSearchPoint ) )
+	if( stateMachine->mPhoebe->turn( nextSearchPoint ) )
 	{
     currentState = SearchState::SearchDrive;
     return NavState::Search;
@@ -215,17 +217,17 @@ NavState Searcher::executeSearchTurn()
 // keeps driving to the next Waypoint.
 NavState Searcher::executeSearchDrive()
 {
-	if( !mPhoebe->roverStatus().autonState().is_auton )
+	if( !stateMachine->mPhoebe->roverStatus().autonState().is_auton )
 	{
     currentState = SearchState::SearchFaceNorth;
 		return NavState::Off;
 	}
-	if( mPhoebe->roverStatus().tennisBall().found )
+	if( stateMachine->mPhoebe->roverStatus().tennisBall().found )
 	{
     currentState = SearchState::TurnToBall;
     return NavState::Search;
 	}
-	if( mPhoebe->roverStatus().obstacle().detected )
+	if( stateMachine->mPhoebe->roverStatus().obstacle().detected )
 	{
         // TODO find way to return obstacle bearing
         // mOriginalObstacleAngle = mPhoebe->roverStatus().obstacle().bearing;
@@ -234,7 +236,7 @@ NavState Searcher::executeSearchDrive()
 	}
 
 	const Odometry& nextSearchPoint = mSearchPoints.front();
-	DriveStatus driveStatus = mPhoebe->drive( nextSearchPoint );
+	DriveStatus driveStatus = stateMachine->mPhoebe->drive( nextSearchPoint );
 	if( driveStatus == DriveStatus::Arrived )
 	{
 		mSearchPoints.pop();
@@ -258,17 +260,17 @@ NavState Searcher::executeSearchDrive()
 // ball.
 NavState Searcher::executeTurnToBall()
 {
-	if( !mPhoebe->roverStatus().autonState().is_auton )
+	if( !stateMachine->mPhoebe->roverStatus().autonState().is_auton )
 	{
     currentState = SearchState::SearchFaceNorth;
 		return NavState::Off;
 	}
-	if( !mPhoebe->roverStatus().tennisBall().found )
+	if( !stateMachine->mPhoebe->roverStatus().tennisBall().found )
 	{
     currentState = SearchState::SearchFaceNorth;
 		return NavState::Search;
 	}
-	if( mPhoebe->turn( mPhoebe->roverStatus().tennisBall().bearing ) )
+	if( stateMachine->mPhoebe->turn( stateMachine->mPhoebe->roverStatus().tennisBall().bearing ) )
 	{
     currentState = SearchState::DriveToBall;
 		return NavState::Search;
@@ -286,29 +288,29 @@ NavState Searcher::executeTurnToBall()
 // continues driving to the ball.
 NavState Searcher::executeDriveToBall()
 {
-	if( !mPhoebe->roverStatus().autonState().is_auton )
+	if( !stateMachine->mPhoebe->roverStatus().autonState().is_auton )
 	{
     currentState = SearchState::SearchFaceNorth;
 		return NavState::Off;
 	}
-	if( !mPhoebe->roverStatus().tennisBall().found )
+	if( !stateMachine->mPhoebe->roverStatus().tennisBall().found )
 	{
     currentState = SearchState::SearchFaceNorth;
 		return NavState::Search;
 	}
 	// TODO: save location of ball then go around object?
-	if( mPhoebe->roverStatus().obstacle().detected )
+	if( stateMachine->mPhoebe->roverStatus().obstacle().detected )
 	{
         // TODO find way to return obstacle bearing
         //mOriginalObstacleAngle = mPhoebe->roverStatus().obstacle().bearing;
     currentState = SearchState::SearchFaceNorth;
 		return NavState::SearchTurnAroundObs;
 	}
-	DriveStatus driveStatus = mPhoebe->drive( mPhoebe->roverStatus().tennisBall().distance,
-											mPhoebe->roverStatus().tennisBall().bearing );
+	DriveStatus driveStatus = stateMachine->mPhoebe->drive( stateMachine->mPhoebe->roverStatus().tennisBall().distance,
+											stateMachine->mPhoebe->roverStatus().tennisBall().bearing );
 	if( driveStatus == DriveStatus::Arrived )
 	{
-		mPhoebe->roverStatus().path().pop();
+		stateMachine->mPhoebe->roverStatus().path().pop();
         // TODO find way to increment waypont
         //++mCompletedWaypoints;
     currentState = SearchState::SearchFaceNorth;
@@ -338,25 +340,24 @@ void Searcher::initializeSearch()
 } // initializeSearch()
 
 // true indicates to added search points
-
 // Add the next loop to the search. If the points are added to the
 // search, returns true. If the rover is further away from the start
 // of the search than the search bail threshold, return false.
 bool Searcher::addFourPointsToSearch()
 {
-	const double pathWidth = mRoverConfig[ "pathWidth" ].GetDouble();
-	if( mSearchPointMultipliers[ 0 ].second * pathWidth > mRoverConfig[ "searchBailThresh" ].GetDouble() )
+	const double pathWidth = stateMachine->mRoverConfig[ "pathWidth" ].GetDouble();
+	if( mSearchPointMultipliers[ 0 ].second * pathWidth > stateMachine->mRoverConfig[ "searchBailThresh" ].GetDouble() )
 	{
 		return false;
 	}
 
 	for( auto& mSearchPointMultiplier : mSearchPointMultipliers )
 	{
-		Odometry nextSearchPoint = mPhoebe->roverStatus().path().front().odom;
+		Odometry nextSearchPoint = stateMachine->mPhoebe->roverStatus().path().front().odom;
 		double totalLatitudeMinutes = nextSearchPoint.latitude_min +
 			( mSearchPointMultiplier.first * pathWidth  * LAT_METER_IN_MINUTES );
 		double totalLongitudeMinutes = nextSearchPoint.longitude_min +
-			( mSearchPointMultiplier.second * pathWidth * mPhoebe->longMeterInMinutes() );
+			( mSearchPointMultiplier.second * pathWidth * stateMachine->mPhoebe->longMeterInMinutes() );
 
 		nextSearchPoint.latitude_deg += totalLatitudeMinutes / 60;
 		// nextSearchPoint.latitude_min += mod( totalLatitudeMinutes, 60 );

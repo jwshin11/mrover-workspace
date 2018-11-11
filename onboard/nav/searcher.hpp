@@ -3,13 +3,16 @@
 
 #include "rover.hpp"
 
+class StateMachine;
+
 class Searcher {
 public:
-  Searcher();
+  Searcher(StateMachine* stateMachine_);
+  
   NavState run();
+  
   // Queue of search points.
   queue<Odometry> mSearchPoints;
-  void UpdateRover(Rover* rover);
 
   // Number of waypoints missed.
   unsigned mMissedWaypoints = 0;
@@ -47,14 +50,17 @@ private:
 
   bool addFourPointsToSearch();
 
-
   // Vector of search point multipliers used as a base for the search
   // points.
   vector< pair<short, short> > mSearchPointMultipliers;
 
-  SearchState currentState;
 
-  Rover * mPhoebe;
+public:
+    
+    SearchState currentState;
+
+    StateMachine* stateMachine;
+
 };
 
 #endif //SEARCHER_HPP
