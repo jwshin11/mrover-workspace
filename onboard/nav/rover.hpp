@@ -5,6 +5,7 @@
 #include <queue>
 
 #include "rover_msgs/AutonState.hpp"
+#include "rover_msgs/Bearing.hpp"
 #include "rover_msgs/Course.hpp"
 #include "rover_msgs/Obstacle.hpp"
 #include "rover_msgs/Odometry.hpp"
@@ -31,6 +32,19 @@ enum class NavState
 	Unknown = 255
 }; // AutonState
 
+// This class is the representation of the search states.
+enum class SearchState
+{
+	SearchFaceNorth = 21,
+	SearchTurn120 = 22,
+	SearchTurn240 = 23,
+	SearchTurn360 = 24,
+	SearchTurn = 25,
+	SearchDrive = 26,
+	TurnToBall = 28,
+	DriveToBall = 29,
+};
+
 // This class is the representation of the drive status.
 enum class DriveStatus
 {
@@ -53,6 +67,7 @@ public:
 		RoverStatus(
 			NavState navState,
 			AutonState autonStateIn,
+			Bearing bearingIn,
 			Course courseIn,
 			Obstacle obstacleIn,
 			Odometry odometryIn,
@@ -62,6 +77,8 @@ public:
 		NavState& currentState();
 
 		AutonState& autonState();
+
+		Bearing& bearing();
 
 		Course& course();
 
@@ -81,6 +98,9 @@ public:
 
 		// The rover's current auton state.
 		AutonState mAutonState;
+
+		// The rover's current bearing.
+		Bearing mBearing;
 
 		// The rover's overall course.
 		Course mCourse;
@@ -129,6 +149,8 @@ private:
 	/* Private Member Functions */
 	/*************************************************************************/
 	void publishJoystick( const double forwardBack, const double leftRight, const bool kill );
+
+	bool isEqual( const Bearing& bearing1, const Bearing& bearing2 ) const;
 
 	bool isEqual( const Obstacle& obstacle1, const Obstacle& obstacle2 ) const;
 

@@ -123,6 +123,12 @@ void StateMachine::updateRoverStatus( AutonState autonState )
 	mNewRoverStatus.autonState() = autonState;
 } // updateRoverStatus( AutonState )
 
+// Updates the bearing of the rov'ers status.
+void StateMachine::updateRoverStatus( Bearing bearing )
+{
+	mNewRoverStatus.bearing() = bearing;
+}
+
 // Updates the course of the rover's status if it has changed.
 void StateMachine::updateRoverStatus( Course course )
 {
@@ -155,6 +161,7 @@ void StateMachine::publishNavState() const
 {
 	NavStatus navStatus;
 	navStatus.nav_state = static_cast<int8_t>( mPhoebe->roverStatus().currentState() );
+	navStatus.search_state = static_cast<int8_t>( searcher.currentState );
 	navStatus.completed_wps = mCompletedWaypoints;
 	navStatus.missed_wps = mMissedWaypoints;
 	navStatus.total_wps = mTotalWaypoints;
