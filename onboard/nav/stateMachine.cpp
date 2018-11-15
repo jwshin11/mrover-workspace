@@ -19,7 +19,7 @@ StateMachine::StateMachine( lcm::LCM& lcmObject )
 	, mOriginalObstacleAngle( 0 )
 	, mTotalWaypoints( 0 )
 	, mCompletedWaypoints( 0 )
-	//, mMissedWaypoints( 0 )
+	, mMissedWaypoints( 0 )
 	, mStateChanged( true )
 	, searcher(this)
 {
@@ -156,7 +156,7 @@ void StateMachine::publishNavState() const
 	NavStatus navStatus;
 	navStatus.nav_state = static_cast<int8_t>( mPhoebe->roverStatus().currentState() );
 	navStatus.completed_wps = mCompletedWaypoints;
-	navStatus.missed_wps = searcher.mMissedWaypoints;
+	navStatus.missed_wps = mMissedWaypoints;
 	navStatus.total_wps = mTotalWaypoints;
 	const string& navStatusChannel = mRoverConfig[ "navStatusChannel" ].GetString();
 	mLcmObject.publish( navStatusChannel, &navStatus );
@@ -171,7 +171,7 @@ NavState StateMachine::executeOff()
 	if( mPhoebe->roverStatus().autonState().is_auton )
 	{
 		mCompletedWaypoints = 0;
-		searcher.mMissedWaypoints = 0;
+		mMissedWaypoints = 0;
 		mTotalWaypoints = mPhoebe->roverStatus().course().num_waypoints;
 
 		if( !mTotalWaypoints )
@@ -286,7 +286,7 @@ NavState StateMachine::executeTurnAroundObs()
 							 mPhoebe->roverStatus().odometry() ) < 2 * cvThresh ) )
 	{
 		mPhoebe->roverStatus().path().pop();
-		searcher.mMissedWaypoints += 1;
+		mMissedWaypoints += 1;
 		return NavState::Turn;
 	}
 	if( ( mPhoebe->roverStatus().currentState() == NavState::SearchTurnAroundObs ) &&

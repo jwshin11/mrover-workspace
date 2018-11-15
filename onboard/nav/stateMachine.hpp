@@ -90,6 +90,9 @@ private:
 	// Number of waypoints completed.
 	unsigned mCompletedWaypoints;
 
+	// Number of waypoints missed.
+  	unsigned mMissedWaypoints;
+
 	// Indicates if the state changed on a given iteration of run.
 	bool mStateChanged;
 

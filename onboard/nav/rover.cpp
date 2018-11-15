@@ -120,6 +120,7 @@ DriveStatus Rover::drive( const Odometry& destination )
 // on-course or off-course.
 DriveStatus Rover::drive( const double distance, const double bearing )
 {
+	std::cout << distance << " " << bearing << std::endl;
 	if( distance < mRoverConfig[ "atGoalDistanceThresh" ].GetDouble() )
 	{
 		printf("arrived\n");
@@ -129,7 +130,8 @@ DriveStatus Rover::drive( const double distance, const double bearing )
 	if( bearing < mRoverConfig[ "drivingBearingThresh" ].GetDouble() )
 	{
 		double distanceEffort = mDistancePid.update( -1 * distance, 0 );
-		double destinationBearing = mod( mRoverStatus.odometry().bearing_deg + bearing, 360);
+		std::cout << distanceEffort << std::endl;
+		double destinationBearing = bearing;
 		throughZero( destinationBearing, mRoverStatus.odometry().bearing_deg );
 		double turningEffort = mBearingPid.update( mRoverStatus.odometry().bearing_deg, destinationBearing );
 		publishJoystick( distanceEffort, turningEffort, false );
@@ -162,12 +164,12 @@ bool Rover::turn( Odometry& destination )
 // absolute bearing. Returns true if the rover has finished turning, false
 // otherwise.
 bool Rover::turn( double bearing )
-{
+{	
 	if( fabs( bearing - mRoverStatus.odometry().bearing_deg ) < mRoverConfig[ "turningBearingThresh" ].GetDouble() )
 	{
 		return true;
 	}
-
+	
 	throughZero( bearing, mRoverStatus.odometry().bearing_deg );
 	double turningEffort = mBearingPid.update( mRoverStatus.odometry().bearing_deg, bearing );
 	publishJoystick( 0, turningEffort, false );
