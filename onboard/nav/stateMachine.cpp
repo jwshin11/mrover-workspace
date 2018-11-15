@@ -161,7 +161,7 @@ void StateMachine::publishNavState() const
 {
 	NavStatus navStatus;
 	navStatus.nav_state = static_cast<int8_t>( mPhoebe->roverStatus().currentState() );
-	navStatus.search_state = static_cast<int8_t>( searcher.currentState );
+	// navStatus.search_state = static_cast<int8_t>( searcher.currentState );
 	navStatus.completed_wps = mCompletedWaypoints;
 	navStatus.missed_wps = mMissedWaypoints;
 	navStatus.total_wps = mTotalWaypoints;

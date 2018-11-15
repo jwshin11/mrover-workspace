@@ -146,9 +146,9 @@
 
                 radius: 25,
 
-                test: "<name>",
+                // test: "<name>",
 
-                current_test: "None",
+                // current_test: "None",
 
                 tennis_ball_state: {
                     found: false,
@@ -225,6 +225,9 @@
                         is_auton: this.get('enabled')
                     });
                     const odom = this.get("odom");
+                    this.fire("bearing", {
+                        bearing: odom.bearing_deg
+                    });
                     this.fire("odom", {
                         latitude_deg: odom.latitude_deg|0,
                         latitude_min: odom.latitude_min,
