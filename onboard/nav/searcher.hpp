@@ -14,9 +14,6 @@ public:
   // Queue of search points.
   queue<Odometry> mSearchPoints;
 
-  // Number of waypoints missed.
-  unsigned mMissedWaypoints = 0;
-
 private:
   enum class SearchState
   {
