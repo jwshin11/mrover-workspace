@@ -1,6 +1,6 @@
 #include "searcher.hpp"
 #include "utilities.hpp"
-#include "StateMachine.hpp"
+#include "stateMachine.hpp"
 
 #include <iostream>
 
