@@ -8,6 +8,7 @@
 
 #include "rover_msgs/NavStatus.hpp"
 #include "utilities.hpp"
+#include "searcher.hpp"
 
 // Constructs a StateMachine object with the input lcm object.
 // Reads the configuartion file and constructs a Rover objet with this
@@ -21,7 +22,6 @@ StateMachine::StateMachine( lcm::LCM& lcmObject )
 	, mCompletedWaypoints( 0 )
 	, mMissedWaypoints( 0 )
 	, mStateChanged( true )
-	, searcher(this)
 {
 	ifstream configFile;
 	configFile.open( "/vagrant/onboard/nav/config.json" );
@@ -34,6 +34,7 @@ StateMachine::StateMachine( lcm::LCM& lcmObject )
 	configFile.close();
 	mRoverConfig.Parse( config.c_str() );
 	mPhoebe = new Rover( mRoverConfig, lcmObject );
+	searcher = new Searcher( this ); //Factory( this, SearchType::SPIRAL );
 } // StateMachine()
 
 
@@ -83,7 +84,7 @@ void StateMachine::run()
 
 			case NavState::Search:
 			{
-				nextState = searcher.run();
+				nextState = searcher->run();
 				break;
 			}
 
@@ -290,10 +291,10 @@ NavState StateMachine::executeTurnAroundObs()
 		return NavState::Turn;
 	}
 	if( ( mPhoebe->roverStatus().currentState() == NavState::SearchTurnAroundObs ) &&
-		( estimateNoneuclid( searcher.mSearchPoints.front(), mPhoebe->roverStatus().odometry() )
+		( estimateNoneuclid( searcher->frontSearchPoint(), mPhoebe->roverStatus().odometry() )
 		  < 2 * cvThresh ) )
 	{
-		searcher.mSearchPoints.pop();
+		searcher->popSearchPoint();
 		return NavState::Search;
 	}
 	if( !mPhoebe->roverStatus().obstacle().detected )

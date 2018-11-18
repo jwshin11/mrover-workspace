@@ -37,6 +37,12 @@ public:
 
 	friend class Searcher;
 
+	friend class Spiral;
+
+	friend class LawnMower;
+
+	friend class Factory;
+
 private:
 	/*************************************************************************/
 	/* Private Member Functions */
@@ -97,7 +103,7 @@ private:
 	bool mStateChanged;
 
 	// Search object to control all search states
-	Searcher searcher;
+	Searcher* searcher;
 
 }; // StateMachine
 

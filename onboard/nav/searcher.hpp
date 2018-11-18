@@ -11,8 +11,9 @@ public:
   
   NavState run();
   
-  // Queue of search points.
-  queue<Odometry> mSearchPoints;
+  Odometry frontSearchPoint();
+
+  void popSearchPoint();
 
 private:
   enum class SearchState
@@ -57,6 +58,12 @@ public:
     SearchState currentState;
 
     StateMachine* stateMachine;
+
+    // Queue of search points.
+    queue<Odometry> mSearchPoints;
+
+    // Number of waypoints missed.
+    unsigned mMissedWaypoints = 0;
 
 };
 
