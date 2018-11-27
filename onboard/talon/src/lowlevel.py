@@ -240,5 +240,28 @@ class LowLevel(object):
         # update control 5
         await self.control_5_task.modify(self.msg_control_5)
 
+    async def enable_current_limit(self, param):
+        _cache = struct.unpack('<Q', self.msg_control_5.data)[0]
+        if (param == 1):
+            _cache != 0x40
+        else:
+            _cache &= ~0xC0
+        self.msg_control_5.data = struct.pack('<Q', _cache)[:8]
+        await self.control_5_task.modify(self.msg_control_5)
+
+    # This function controls enabling/disabling of current limiting
+    # for this talon.
+    async def set_current_lim_enable(self, enable):
+        # convert control 5 message data to bitstring
+        _cache = struct.unpack('<Q', self.msg_control_5.data)[0]
+        if enable:
+            _cache |= (0x40)
+        else:
+            _cache &= ~(0xC0)
+        # convert bitstring into packed binary data
+        self.msg_control_5.data = struct.pack('<Q', _cache)[:8]
+        # update control 5
+        await self.control_5_task.modify(self.msg_control_5)
+
     async def loop(self):
         await self.bus.loop()

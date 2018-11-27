@@ -14,6 +14,9 @@ public:
   Odometry frontSearchPoint();
 
   void popSearchPoint();
+  
+  // Queue of search points.
+  // queue<Odometry> mSearchPoints;
 
 private:
   enum class SearchState

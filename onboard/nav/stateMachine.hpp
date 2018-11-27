@@ -27,6 +27,8 @@ public:
 
 	void updateRoverStatus( AutonState autonState );
 
+	void updateRoverStatus( Bearing bearing );
+
 	void updateRoverStatus( Course course );
 
 	void updateRoverStatus( Obstacle obstacle );
