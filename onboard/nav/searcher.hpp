@@ -7,18 +7,25 @@ class StateMachine;
 
 class Searcher {
 public:
-  Searcher(StateMachine* stateMachine_);
+  /*************************************************************************/
+  /* Public Member Functions */
+  /*************************************************************************/
+  Searcher(StateMachine* stateMachine_)
+  : currentState(SearchState::SearchFaceNorth)
+  , stateMachine(stateMachine_) { }
+
+  virtual ~Searcher() { }
   
   NavState run();
   
   Odometry frontSearchPoint();
 
   void popSearchPoint();
-  
-  // Queue of search points.
-  // queue<Odometry> mSearchPoints;
 
 private:
+  /*************************************************************************/
+  /* Private Enum Class */
+  /*************************************************************************/
   enum class SearchState
   {
     SearchFaceNorth,
@@ -31,6 +38,9 @@ private:
     DriveToBall
   };
 
+  /*************************************************************************/
+  /* Private Member Functions */
+  /*************************************************************************/
   NavState executeSearchFaceNorth();
 
   NavState executeSearchTurn120();
@@ -47,26 +57,24 @@ private:
 
   NavState executeDriveToBall();
 
-  void initializeSearch();
+  virtual void initializeSearch() = 0;
 
-  bool addFourPointsToSearch();
+  virtual bool addFourPointsToSearch() = 0;
 
-  // Vector of search point multipliers used as a base for the search
-  // points.
+protected:  
+  /*************************************************************************/
+  /* Protected Member Variables */
+  /*************************************************************************/
+ 
+  SearchState currentState;
+
+  StateMachine* stateMachine;
+
+  // Vector of search point multipliers used as a base for the search points.
   vector< pair<short, short> > mSearchPointMultipliers;
 
-
-public:
-    
-    SearchState currentState;
-
-    StateMachine* stateMachine;
-
-    // Queue of search points.
-    queue<Odometry> mSearchPoints;
-
-    // Number of waypoints missed.
-    unsigned mMissedWaypoints = 0;
+  // Queue of search points.
+  queue<Odometry> mSearchPoints;
 
 };
 

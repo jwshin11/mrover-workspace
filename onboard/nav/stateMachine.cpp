@@ -8,7 +8,7 @@
 
 #include "rover_msgs/NavStatus.hpp"
 #include "utilities.hpp"
-#include "searcher.hpp"
+#include "searches.hpp"
 
 // Constructs a StateMachine object with the input lcm object.
 // Reads the configuartion file and constructs a Rover objet with this
@@ -22,7 +22,6 @@ StateMachine::StateMachine( lcm::LCM& lcmObject )
 	, mCompletedWaypoints( 0 )
 	, mMissedWaypoints( 0 )
 	, mStateChanged( true )
-	, searcher(this)
 {
 	ifstream configFile;
 	configFile.open( "/vagrant/onboard/nav/config.json" );
@@ -35,7 +34,7 @@ StateMachine::StateMachine( lcm::LCM& lcmObject )
 	configFile.close();
 	mRoverConfig.Parse( config.c_str() );
 	mPhoebe = new Rover( mRoverConfig, lcmObject );
-	searcher = new Searcher( this ); //Factory( this, SearchType::SPIRAL );
+	searcher = SearchFactory( this, SearchType::SPIRAL);
 } // StateMachine()
 
 
@@ -85,7 +84,7 @@ void StateMachine::run()
 
 			case NavState::Search:
 			{
-				nextState = searcher.run();
+				nextState = searcher->run();
 				break;
 			}
 
@@ -299,10 +298,10 @@ NavState StateMachine::executeTurnAroundObs()
 		return NavState::Turn;
 	}
 	if( ( mPhoebe->roverStatus().currentState() == NavState::SearchTurnAroundObs ) &&
-		( estimateNoneuclid( searcher.mSearchPoints.front(), mPhoebe->roverStatus().odometry() )
+		( estimateNoneuclid( searcher->frontSearchPoint(), mPhoebe->roverStatus().odometry() )
 		  < 2 * cvThresh ) )
 	{
-		searcher.mSearchPoints.pop();
+		searcher->popSearchPoint();
 		return NavState::Search;
 	}
 	if( !mPhoebe->roverStatus().obstacle().detected )
@@ -311,7 +310,6 @@ NavState StateMachine::executeTurnAroundObs()
 		mObstacleAvoidancePoint = createAvoidancePoint( distanceAroundObs );
 		if( mPhoebe->roverStatus().currentState() == NavState::TurnAroundObs )
 		{
-			printf("here1\n");
 			return NavState::DriveAroundObs;
 		}
 		return NavState::SearchDriveAroundObs;
@@ -340,7 +338,6 @@ NavState StateMachine::executeDriveAroundObs()
 		mOriginalObstacleAngle = mPhoebe->roverStatus().obstacle().bearing;
 		if( mPhoebe->roverStatus().currentState() == NavState::DriveAroundObs )
 		{
-			printf("here2\n");
 			return NavState::TurnAroundObs;
 		}
 		return NavState::Search;
@@ -391,10 +388,10 @@ Odometry StateMachine::createAvoidancePoint( const double distance )
 // set threshold for when to skip a point?
 
 
-
 // TODOS:
 // [turn to ball | drive to ball] if ball lost, restart search a better way??
 // [add four points to search] look into this
 // look into thresholds for searching
 // [drive to ball] obstacle and ball
 // all of code, what to do in cases of both ball and obstacle
+// Publish both Search and Nav state in lcm messages

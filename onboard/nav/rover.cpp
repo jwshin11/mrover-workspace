@@ -101,20 +101,7 @@ DriveStatus Rover::drive( const Odometry& destination )
 	double distance = estimateNoneuclid( mRoverStatus.odometry(), destination );
 	double bearing = calcBearing( mRoverStatus.odometry(), destination );
 
-	if( distance < mRoverConfig[ "atGoalDistanceThresh" ].GetDouble() )
-	{
-		return DriveStatus::Arrived;
-	}
-	if( fabs( bearing - mRoverStatus.bearing().bearing ) < mRoverConfig[ "drivingBearingThresh" ].GetDouble() )
-	{
-		double distanceEffort = mDistancePid.update( -1 * distance, 0 );
-		double destinationBearing = calcBearing( mRoverStatus.odometry(), destination );
-		throughZero( destinationBearing, mRoverStatus.bearing().bearing );
-		double turningEffort = mBearingPid.update( mRoverStatus.bearing().bearing, destinationBearing );
-		publishJoystick( distanceEffort, turningEffort, false );
-		return DriveStatus::OnCourse;
-	}
-	return DriveStatus::OffCourse;
+	return drive( distance, bearing );
 } // drive()
 
 // Sends a joystick command to drive forward from the current odometry
@@ -125,23 +112,21 @@ DriveStatus Rover::drive( const Odometry& destination )
 // on-course or off-course.
 DriveStatus Rover::drive( const double distance, const double bearing )
 {
-	std::cout << distance << " " << bearing << std::endl;
 	if( distance < mRoverConfig[ "atGoalDistanceThresh" ].GetDouble() )
 	{
-		printf("arrived\n");
 		return DriveStatus::Arrived;
 	}
-	// todo: check if this bearing needs to be subtracted from the current bearing and if we need fabs()
-	if( bearing < mRoverConfig[ "drivingBearingThresh" ].GetDouble() )
+	if( fabs( bearing - mRoverStatus.bearing().bearing ) < mRoverConfig[ "drivingBearingThresh" ].GetDouble() )
 	{
 		double distanceEffort = mDistancePid.update( -1 * distance, 0 );
-		double destinationBearing = mod( mRoverStatus.bearing().bearing + bearing, 360);
+		//double destinationBearing = mod( mRoverStatus.bearing().bearing + bearing, 360);
+		double destinationBearing = bearing;
 		throughZero( destinationBearing, mRoverStatus.bearing().bearing );
 		double turningEffort = mBearingPid.update( mRoverStatus.bearing().bearing, destinationBearing );
 		publishJoystick( distanceEffort, turningEffort, false );
-		printf("oncourse\n");
 		return DriveStatus::OnCourse;
 	}
+	
 	printf("offcourse\n");
 	return DriveStatus::OffCourse;
 } // drive()
@@ -152,16 +137,7 @@ DriveStatus Rover::drive( const double distance, const double bearing )
 bool Rover::turn( Odometry& destination )
 {
 	double bearing = calcBearing( mRoverStatus.odometry(), destination );
-	// std::cout << bearing - mRoverStatus.bearing().bearing << "\n";
-	if( fabs( bearing - mRoverStatus.bearing().bearing ) < mRoverConfig[ "turningBearingThresh" ].GetDouble() )
-	{
-		return true;
-	}
-	double destinationBearing = calcBearing( mRoverStatus.odometry(), destination );
-	throughZero( destinationBearing, mRoverStatus.bearing().bearing );
-	double turningEffort = mBearingPid.update( mRoverStatus.bearing().bearing, destinationBearing );
-	publishJoystick( 0, turningEffort, false );
-	return false;
+	return turn( bearing );
 } // turn()
 
 // Sends a joystick command to turn the rover. The bearing is the
@@ -173,7 +149,6 @@ bool Rover::turn( double bearing )
 	{
 		return true;
 	}
-
 	throughZero( bearing, mRoverStatus.bearing().bearing );
 	double turningEffort = mBearingPid.update( mRoverStatus.bearing().bearing, bearing );
 	publishJoystick( 0, turningEffort, false );
@@ -204,7 +179,7 @@ bool Rover::updateRover( RoverStatus newRoverStatus )
 		}
 
 		if( mRoverStatus.currentState() == NavState::Search ) 
-		//	||
+		//	&&
 		// 	  mRoverStatus.currentState() == NavState::Search ) &&
 		// 	!isEqual( mRoverStatus.tennisBall(), newRoverStatus.tennisBall() ) )
 		{

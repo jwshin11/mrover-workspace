@@ -43,8 +43,6 @@ public:
 
 	friend class LawnMower;
 
-	friend class Factory;
-
 private:
 	/*************************************************************************/
 	/* Private Member Functions */
