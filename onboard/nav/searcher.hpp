@@ -8,9 +8,11 @@ class StateMachine;
 class Searcher {
 public:
   Searcher(StateMachine* stateMachine_);
-  
+
+  virtual ~Searcher() {}
+
   NavState run();
-  
+
   // Queue of search points.
   queue<Odometry> mSearchPoints;
 
@@ -46,17 +48,19 @@ private:
 
   NavState executeDriveToBall();
 
-  void initializeSearch();
+  virtual void initializeSearch() = 0;
 
-  bool addFourPointsToSearch();
+  virtual bool addFourPointsToSearch() = 0;
 
   // Vector of search point multipliers used as a base for the search
   // points.
+
+protected:
   vector< pair<short, short> > mSearchPointMultipliers;
 
 
 public:
-    
+
     SearchState currentState;
 
     StateMachine* stateMachine;

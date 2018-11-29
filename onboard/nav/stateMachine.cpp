@@ -8,6 +8,7 @@
 
 #include "rover_msgs/NavStatus.hpp"
 #include "utilities.hpp"
+//#include "searcher_types.hpp"
 
 // Constructs a StateMachine object with the input lcm object.
 // Reads the configuartion file and constructs a Rover objet with this
@@ -21,8 +22,8 @@ StateMachine::StateMachine( lcm::LCM& lcmObject )
 	, mCompletedWaypoints( 0 )
 	//, mMissedWaypoints( 0 )
 	, mStateChanged( true )
-	, searcher(this)
 {
+	searcher = new Spiral(this);
 	ifstream configFile;
 	configFile.open( "/vagrant/onboard/nav/config.json" );
 	string config = "";
@@ -42,6 +43,23 @@ StateMachine::StateMachine( lcm::LCM& lcmObject )
 StateMachine::~StateMachine()
 {
 	delete mPhoebe;
+	delete searcher;
+}
+
+void StateMachine::setSearcher(searcher_type type) {
+	delete searcher;
+
+	switch(type) {
+		case Spiral_type :
+			searcher = new Spiral(this);
+			break;
+		case Lawnmower_type :
+			searcher = new Lawnmower(this);
+			break;
+		default :
+			searcher = new Spiral(this);
+			break;
+	}
 }
 
 // Runs the state machine through one iteration. The state machine will
@@ -83,7 +101,7 @@ void StateMachine::run()
 
 			case NavState::Search:
 			{
-				nextState = searcher.run();
+				nextState = searcher->run();
 				break;
 			}
 
@@ -156,7 +174,7 @@ void StateMachine::publishNavState() const
 	NavStatus navStatus;
 	navStatus.nav_state = static_cast<int8_t>( mPhoebe->roverStatus().currentState() );
 	navStatus.completed_wps = mCompletedWaypoints;
-	navStatus.missed_wps = searcher.mMissedWaypoints;
+	navStatus.missed_wps = searcher->mMissedWaypoints;
 	navStatus.total_wps = mTotalWaypoints;
 	const string& navStatusChannel = mRoverConfig[ "navStatusChannel" ].GetString();
 	mLcmObject.publish( navStatusChannel, &navStatus );
@@ -171,7 +189,7 @@ NavState StateMachine::executeOff()
 	if( mPhoebe->roverStatus().autonState().is_auton )
 	{
 		mCompletedWaypoints = 0;
-		searcher.mMissedWaypoints = 0;
+		searcher->mMissedWaypoints = 0;
 		mTotalWaypoints = mPhoebe->roverStatus().course().num_waypoints;
 
 		if( !mTotalWaypoints )
@@ -286,14 +304,14 @@ NavState StateMachine::executeTurnAroundObs()
 							 mPhoebe->roverStatus().odometry() ) < 2 * cvThresh ) )
 	{
 		mPhoebe->roverStatus().path().pop();
-		searcher.mMissedWaypoints += 1;
+		searcher->mMissedWaypoints += 1;
 		return NavState::Turn;
 	}
 	if( ( mPhoebe->roverStatus().currentState() == NavState::SearchTurnAroundObs ) &&
-		( estimateNoneuclid( searcher.mSearchPoints.front(), mPhoebe->roverStatus().odometry() )
+		( estimateNoneuclid( searcher->mSearchPoints.front(), mPhoebe->roverStatus().odometry() )
 		  < 2 * cvThresh ) )
 	{
-		searcher.mSearchPoints.pop();
+		searcher->mSearchPoints.pop();
 		return NavState::Search;
 	}
 	if( !mPhoebe->roverStatus().obstacle().detected )

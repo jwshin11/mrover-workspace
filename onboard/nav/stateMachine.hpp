@@ -3,6 +3,7 @@
 
 #include "rover.hpp"
 #include "searcher.hpp"
+#include "searcherTypes.hpp"
 
 #include <lcm/lcm-cpp.hpp>
 #include <queue>
@@ -11,6 +12,7 @@
 using namespace std;
 using namespace rover_msgs;
 
+enum searcher_type;
 // This class implements the logic for the state machine for the
 // autonomous navigation of the rover.
 class StateMachine
@@ -35,7 +37,10 @@ public:
 
 	void updateRoverStatus( TennisBall tennisBall );
 
+//TODO
+//Find better way to preserve abstraction
 	friend class Searcher;
+	friend class Spiral;
 
 private:
 	/*************************************************************************/
@@ -94,7 +99,9 @@ private:
 	bool mStateChanged;
 
 	// Search object to control all search states
-	Searcher searcher;
+	Searcher* searcher;
+
+	void setSearcher(searcher_type type);
 
 }; // StateMachine
 
