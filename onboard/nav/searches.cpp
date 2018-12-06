@@ -8,18 +8,18 @@
 #include <cmath>
 #include <stack>
 
-void reverseQueue(queue<Odometry>& Queue) 
-{ 
-    stack<Odometry> Stack; 
-    while (!Queue.empty()) { 
-        Stack.push(Queue.front()); 
-        Queue.pop(); 
-    } 
-    while (!Stack.empty()) { 
-        Queue.push(Stack.top()); 
-        Stack.pop(); 
-    } 
-} 
+void reverseQueue(queue<Odometry>& Queue)
+{
+    stack<Odometry> Stack;
+    while (!Queue.empty()) {
+        Stack.push(Queue.front());
+        Queue.pop();
+    }
+    while (!Stack.empty()) {
+        Queue.push(Stack.top());
+        Stack.pop();
+    }
+}
 /*************************************************************************/
 /* Spiral Search */
 /*************************************************************************/
@@ -38,7 +38,7 @@ void SpiralOut::initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRo
 	mSearchPointMultipliers.push_back( pair<short, short> ( -1, 1 ) );
 	mSearchPointMultipliers.push_back( pair<short, short> ( -1, -1 ) );
 	mSearchPointMultipliers.push_back( pair<short, short> ( 1, -1 ) );
-	
+
 	while( mSearchPointMultipliers[ 0 ].second * pathWidth < mRoverConfig[ "searchBailThresh" ].GetDouble() ) {
 		for( auto& mSearchPointMultiplier : mSearchPointMultipliers )
 		{
@@ -75,11 +75,11 @@ void SpiralIn::initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRov
 	clear( mSearchPoints );
 
 	mSearchPointMultipliers.clear();
-	mSearchPointMultipliers.push_back( pair<short, short> ( 0, 1 ) );
+	mSearchPointMultipliers.push_back( pair<short, short> ( -1, 0 ) );
 	mSearchPointMultipliers.push_back( pair<short, short> ( -1, 1 ) );
-	mSearchPointMultipliers.push_back( pair<short, short> ( -1, -1 ) );
+	mSearchPointMultipliers.push_back( pair<short, short> ( 1, 1 ) );
 	mSearchPointMultipliers.push_back( pair<short, short> ( 1, -1 ) );
-	
+
 	while( mSearchPointMultipliers[ 0 ].second * pathWidth < mRoverConfig[ "searchBailThresh" ].GetDouble() ) {
 		for( auto& mSearchPointMultiplier : mSearchPointMultipliers )
 		{
@@ -121,7 +121,7 @@ void LawnMower::initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRo
 	mSearchPointMultipliers.push_back( pair<short, short> ( -2, 0 ) );
 
 
-	while( fabs(mSearchPointMultipliers[ 0 ].first * pathWidth) < searchBailThresh ) 
+	while( fabs(mSearchPointMultipliers[ 0 ].first * pathWidth) < searchBailThresh )
 	{
 		for( auto& mSearchPointMultiplier : mSearchPointMultipliers )
 		{
@@ -137,7 +137,7 @@ void LawnMower::initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRo
 			nextSearchPoint.longitude_deg += totalLongitudeMinutes / 60;
 			nextSearchPoint.longitude_min = ( totalLongitudeMinutes - ( ( (int) totalLongitudeMinutes) / 60 ) * 60 );
 
-			mSearchPointMultiplier.first -= 2;			
+			mSearchPointMultiplier.first -= 2;
 			mSearchPoints.push( nextSearchPoint );
 		}
 	}
@@ -147,7 +147,7 @@ void LawnMower::initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRo
 /*************************************************************************/
 /* LawnMower Search */
 /*************************************************************************/
-Searcher* SearchFactory( StateMachine* stateMachine, SearchType type ) 
+Searcher* SearchFactory( StateMachine* stateMachine, SearchType type )
 {
 	Searcher* search = nullptr;
 	switch (type)
@@ -159,7 +159,7 @@ Searcher* SearchFactory( StateMachine* stateMachine, SearchType type )
 		case SearchType::LAWNMOWER:
 			search = new LawnMower( stateMachine );
 			break;
-		
+
 		case SearchType::SPIRALIN:
 			search = new SpiralIn( stateMachine );
 			break;

@@ -48,25 +48,25 @@ StateMachine::~StateMachine()
 	delete mPhoebe;
 }
 
-void StateMachine::setSeacher(SearchType type) 
+void StateMachine::setSearcher(SearchType type)
 {
 	if(mSearcher) delete mSearcher;
 	mSearcher = SearchFactory( this, type );
 }
 
-void StateMachine::updateMissedPoints( ) 
+void StateMachine::updateMissedPoints( )
 {
 	mMissedWaypoints += 1;
 	return;
 }
 
-void StateMachine::updateCompletedPoints( ) 
+void StateMachine::updateCompletedPoints( )
 {
 	mCompletedWaypoints += 1;
 	return;
 }
 
-void StateMachine::updateObstacleAngle( double angle ) 
+void StateMachine::updateObstacleAngle( double angle )
 {
 	mOriginalObstacleAngle = angle;
 	return;

@@ -4,12 +4,12 @@
 
 #include <iostream>
 
-Odometry Searcher::frontSearchPoint() 
+Odometry Searcher::frontSearchPoint()
 {
 	return mSearchPoints.front();
 }
 
-void Searcher::popSearchPoint() 
+void Searcher::popSearchPoint()
 {
 	mSearchPoints.pop();
 	return;
@@ -133,7 +133,6 @@ NavState Searcher::executeSearchFace360( Rover* mPhoebe, const rapidjson::Docume
 	}
 	if( mPhoebe->turn( 90 ) )
 	{
-		initializeSearch( mPhoebe, mRoverConfig );
     	return NavState::SearchTurn;
 	}
   return NavState::SearchFace360;
@@ -150,27 +149,37 @@ NavState Searcher::executeSearchTurn( Rover* mPhoebe, const rapidjson::Document&
 	{
     	return NavState::TurnToBall;
 	}
-	
+
 	if( mSearchPoints.empty() )
 	{
 		static int searchFails = 0;
-		searchFails += 1;
 
-		if ( searchFails >= 1 ) {
+		if ( mRoverConfig["searchOrderSize"].GetInt() <= searchFails) {
 			mPhoebe->roverStatus().path().pop();
 			stateMachine->updateMissedPoints();
 			return NavState::Turn;
 		}
 		else {
-			if (searchFails == 1)
-				stateMachine->setSeacher(SearchType::LAWNMOWER);
-			if (searchFails == 2)
-				stateMachine->setSeacher(SearchType::SPIRALIN);
+			switch(mRoverConfig[ "searchOrder" ][ searchFails ].GetInt())
+			{
+				case 0:
+					stateMachine->setSearcher(SearchType::SPIRALOUT);
+					break;
+				case 1:
+					stateMachine->setSearcher(SearchType::LAWNMOWER);
+					break;
+				case 2:
+					stateMachine->setSearcher(SearchType::SPIRALIN);
+					break;
+				default:
+					stateMachine->setSearcher(SearchType::SPIRALOUT);
+					break;
+			}
 			initializeSearch( mPhoebe, mRoverConfig );
-			return NavState::SearchTurn;
-		}	
+			searchFails += 1;
+		}
 	}
-	
+
 	Odometry& nextSearchPoint = mSearchPoints.front();
 	if( mPhoebe->turn( nextSearchPoint ) )
 	{
@@ -248,7 +257,7 @@ NavState Searcher::executeDriveToBall( Rover * mPhoebe )
 	// TODO: save location of ball then go around object?
 	if( mPhoebe->roverStatus().obstacle().detected )
 	{
-		stateMachine->updateObstacleAngle(mPhoebe->roverStatus().obstacle().bearing);    	
+		stateMachine->updateObstacleAngle(mPhoebe->roverStatus().obstacle().bearing);
 		// currentState = SearchState::SearchFaceNorth; // todo
 		return NavState::SearchTurnAroundObs;
 	}
