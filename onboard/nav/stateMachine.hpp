@@ -2,7 +2,6 @@
 #define STATE_MACHINE_HPP
 
 #include "rover.hpp"
-#include "searcher.hpp"
 #include "searches.hpp"
 
 #include <lcm/lcm-cpp.hpp>
@@ -24,7 +23,7 @@ public:
 
 	~StateMachine();
 
-	void run();
+	void run( );
 
 	void updateRoverStatus( AutonState autonState );
 
@@ -38,13 +37,13 @@ public:
 
 	void updateRoverStatus( TennisBall tennisBall );
 
-	void SetSearcher(SearchType search_type);
+	void updateMissedPoints( );
 
-	friend class Searcher;
+	void updateCompletedPoints( );
 
-	friend class Spiral;
+	void updateObstacleAngle( double angle );
 
-	friend class LawnMower;
+	void setSeacher(SearchType type);
 
 private:
 	/*************************************************************************/
@@ -105,8 +104,8 @@ private:
 	// Indicates if the state changed on a given iteration of run.
 	bool mStateChanged;
 
-	// Search object to control all search states
-	Searcher* searcher;
+	// Search pointer to control search states
+	Searcher* mSearcher;
 
 }; // StateMachine
 

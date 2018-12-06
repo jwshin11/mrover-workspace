@@ -5,55 +5,63 @@
 
 enum class SearchType
 {
-	SPIRAL,
+	SPIRALOUT,
 	LAWNMOWER,
+	SPIRALIN,
 	UNKNOWN
 };
 
-Searcher* SearchFactory(StateMachine* stateMachine, SearchType type);
+Searcher* SearchFactory( StateMachine* stateMachine, SearchType type );
 
 /*************************************************************************/
-/* Spiral Search */
+/* SpiralOut Search */
 /*************************************************************************/
-class Spiral : public Searcher
+class SpiralOut : public Searcher 
 {
 public:
-	Spiral(StateMachine* stateMachine_)
+	SpiralOut( StateMachine* stateMachine_ ) 
 	: Searcher(stateMachine_) {}
 
-	~Spiral();
+	~SpiralOut();
 
 	// Initializes the search ponit multipliers to be the intermost loop
  	// of the search.
-	void initializeSearch();
+	void initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRoverConfig );
+	
+};
 
-	// true indicates to added search points
-	// Add the next loop to the search. If the points are added to the
-	// search, returns true. If the rover is further away from the start
-	// of the search than the search bail threshold, return false.
-	bool addPointsToSearch();
+/*************************************************************************/
+/* SpiralIn Search */
+/*************************************************************************/
+class SpiralIn : public Searcher 
+{
+public:
+	SpiralIn( StateMachine* stateMachine_ ) 
+	: Searcher(stateMachine_) {}
+
+	~SpiralIn();
+
+	// Initializes the search ponit multipliers to be the intermost loop
+ 	// of the search.
+	void initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRoverConfig );
+	
 };
 
 /*************************************************************************/
 /* LawnMower Search */
 /*************************************************************************/
-class LawnMower : public Searcher
+class LawnMower : public Searcher 
 {
 public:
-	LawnMower(StateMachine* stateMachine_)
+	LawnMower( StateMachine* stateMachine_ ) 
 	: Searcher(stateMachine_) {}
 
 	~LawnMower();
 
 	// Initializes the search ponit multipliers to be the intermost loop
  	// of the search.
-	void initializeSearch();
+	void initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRoverConfig );
 
-	// true indicates to added search points
-	// Add the next loop to the search. If the points are added to the
-	// search, returns true. If the rover is further away from the start
-	// of the search than the search bail threshold, return false.
-	bool addPointsToSearch();
 };
 
 #endif //SEARCHES_HPP

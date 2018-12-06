@@ -11,14 +11,12 @@ public:
   /* Public Member Functions */
   /*************************************************************************/
   Searcher(StateMachine* stateMachine_)
-  : currentState(SearchState::SearchFaceNorth)
-  , stateMachine(stateMachine_)
-  , search_fails(0) { }
+  : stateMachine(stateMachine_) {}
 
-  virtual ~Searcher() { }
-
-  NavState run();
-
+  virtual ~Searcher() {}
+  
+  NavState run( Rover * mPhoebe, const rapidjson::Document& mRoverConfig );
+  
   Odometry frontSearchPoint();
 
   void popSearchPoint();
@@ -27,6 +25,7 @@ private:
   /*************************************************************************/
   /* Private Enum Class */
   /*************************************************************************/
+ 
   enum class SearchState
   {
     SearchFaceNorth,
@@ -42,36 +41,29 @@ private:
   /*************************************************************************/
   /* Private Member Functions */
   /*************************************************************************/
-  NavState executeSearchFaceNorth();
+  NavState executeSearchFaceNorth( Rover* mPhoebe );
 
-  NavState executeSearchTurn120();
+  NavState executeSearchFace120( Rover* mPhoebe );
 
-  NavState executeSearchTurn240();
+  NavState executeSearchFace240( Rover* mPhoebe );
 
-  NavState executeSearchTurn360();
+  NavState executeSearchFace360( Rover* mPhoebe, const rapidjson::Document& mRoverConfig );
 
-  NavState executeSearchTurn();
+  NavState executeSearchTurn( Rover* mPhoebe, const rapidjson::Document& mRoverConfig );
 
-  NavState executeSearchDrive();
+  NavState executeSearchDrive( Rover* mPhoebe );
 
-  NavState executeTurnToBall();
+  NavState executeTurnToBall( Rover* mPhoebe );
 
-  NavState executeDriveToBall();
+  NavState executeDriveToBall( Rover* mPhoebe );
 
-  virtual void initializeSearch() = 0;
+  virtual void initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRoverConfig ) = 0;
 
-  virtual bool addPointsToSearch() = 0;
-
-protected:
+protected:  
   /*************************************************************************/
   /* Protected Member Variables */
   /*************************************************************************/
-
-  SearchState currentState;
-
   StateMachine* stateMachine;
-
-  int search_fails;
 
   // Vector of search point multipliers used as a base for the search points.
   vector< pair<short, short> > mSearchPointMultipliers;
@@ -80,5 +72,6 @@ protected:
   queue<Odometry> mSearchPoints;
 
 };
+
 
 #endif //SEARCHER_HPP

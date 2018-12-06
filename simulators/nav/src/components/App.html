@@ -61,11 +61,10 @@
 
             {{#if lcm_connected}}
             <p><b>Navigation State:</b> {{ nav_state_textual }}</p>
-            <p><b>Search State:</b> {{ search_state_textual }}</p>
             <p><b>Completed Waypoints:</b> {{ completed_wps }}/{{ total_wps }}</p>
             <p><b>Missed Waypoints:</b> {{ missed_wps }}/{{ total_wps }}</p>
-            <p><b>Current Test Case:</b> {{ current_test }}</p>
-            <p><b>Current Test Case:</b> {{ test }}</p>
+            <p><b>Current Test Case:</b> {{ current_test_name }}</p>
+            <p><b>Test Case:</b> {{ test }}</p>
             {{else}}
             <p>LCM not connected.</p>
             {{/if}}
@@ -113,6 +112,12 @@
         </div>
         {{/each}}
     </div>
+
+    <script>
+        function uploadFile() {
+            current_test: test
+        }
+    </script>
 </div>
 
 <script>
@@ -146,9 +151,9 @@
 
                 radius: 25,
 
-                // test: "<name>",
+                test: "<name>",
 
-                // current_test: "None",
+                current_test: "None",
 
                 tennis_ball_state: {
                     found: false,
@@ -176,34 +181,40 @@
 
         computed: {
             nav_state_textual: (nav_state) => {
-                //
                 switch(nav_state) {
-                case 0: return 'OFF';
-                case 1: return 'DONE';
-                case 10: return 'TURN';
-                case 11: return 'DRIVE';
-                case 20: return 'SEARCH'
-                case 30: return 'TURN_AROUND_OBS';
-                case 31: return 'DRIVE_AROUND_OBS';
-                case 32: return 'SEARCH_TURN_AROUND_OBS';
-                case 33: return 'SEARCH_DRIVE_AROUND_OBS';
-                default: return 'UNKNOWN';
+                    case 0: return 'Off';
+                    case 1: return 'Done';
+                    case 10: return 'Turn';
+                    case 11: return 'Drive';
+                    case 20: return 'Search Face North';
+                    case 21: return 'Search Face 120';
+                    case 22: return 'Search Face 240';
+                    case 23: return 'Search Face 360';
+                    case 24: return 'Search Turn';
+                    case 25: return 'Search Drive';
+                    case 28: return 'Turn To Ball';
+                    case 29: return 'Drive To Ball';
+                    case 30: return 'Turn Around Obstacle';
+                    case 31: return 'Drive Around Obstacle';
+                    case 32: return 'Search Turn Around Obstacle';
+                    case 33: return 'Search Drive Around Obstacle';
+                    default: return 'Unknown';
                 }
             },
 
-            search_state_textual: (search_state) => {
-                switch(search_state) {
-                    case 0: return 'N/A'
-                    case 1: return 'Face North';
-                    case 2: return 'Face 120';
-                    case 3: return 'Face 240';
-                    case 4: return 'Face 360';
-                    case 5: return 'Turn';
-                    case 6: return 'Drive';
-                    case 7: return 'Turn to Ball';
-                    case 8: return 'Drive to Ball';
-                }
-            },
+            // search_state_textual: (search_state) => {
+            //     switch(search_state) {
+            //         case 0: return 'N/A'
+            //         case 1: return 'Face North';
+            //         case 2: return 'Face 120';
+            //         case 3: return 'Face 240';
+            //         case 4: return 'Face 360';
+            //         case 5: return 'Turn';
+            //         case 6: return 'Drive';
+            //         case 7: return 'Turn to Ball';
+            //         case 8: return 'Drive to Ball';
+            //     }
+            // },
 
             latitude_min_display: (odom) => odom.latitude_min.toFixed(NUM_DIGITS),
             longitude_min_display: (odom) => odom.longitude_min.toFixed(NUM_DIGITS),
@@ -272,10 +283,6 @@
             DrawModeSelector,
             SimulatedItemDisplay
         }
-    }
-
-    function uploadFile() {
-        current_test: test
     }
 </script>
 

@@ -66,6 +66,10 @@ Rover::RoverStatus& Rover::RoverStatus::operator=( Rover::RoverStatus& newRoverS
 {
 	mAutonState = newRoverStatus.autonState();
 	mCourse = newRoverStatus.course();
+	while( !mPath.empty() )
+	{
+		mPath.pop();
+	}
 	for( int courseIndex = 0; courseIndex < mCourse.num_waypoints; ++courseIndex )
 	{
 		mPath.push( mCourse.waypoints[ courseIndex ] );
@@ -110,6 +114,7 @@ DriveStatus Rover::drive( const Odometry& destination )
 // rover small amounts as "course corrections".
 // The return value indicates if the rover has arrived or if it is
 // on-course or off-course.
+
 DriveStatus Rover::drive( const double distance, const double bearing )
 {
 	if( distance < mRoverConfig[ "atGoalDistanceThresh" ].GetDouble() )
@@ -119,8 +124,8 @@ DriveStatus Rover::drive( const double distance, const double bearing )
 	if( fabs( bearing - mRoverStatus.bearing().bearing ) < mRoverConfig[ "drivingBearingThresh" ].GetDouble() )
 	{
 		double distanceEffort = mDistancePid.update( -1 * distance, 0 );
-		//double destinationBearing = mod( mRoverStatus.bearing().bearing + bearing, 360);
 		double destinationBearing = bearing;
+		//double destinationBearing = mod( mRoverStatus.bearing().bearing + bearing, 360);
 		throughZero( destinationBearing, mRoverStatus.bearing().bearing );
 		double turningEffort = mBearingPid.update( mRoverStatus.bearing().bearing, destinationBearing );
 		publishJoystick( distanceEffort, turningEffort, false );
@@ -130,6 +135,7 @@ DriveStatus Rover::drive( const double distance, const double bearing )
 	printf("offcourse\n");
 	return DriveStatus::OffCourse;
 } // drive()
+
 
 // Sends a joystick command to turn the rover toward the destination
 // odometry. Returns true if the rover has finished turning, false
@@ -177,11 +183,9 @@ bool Rover::updateRover( RoverStatus newRoverStatus )
 			mRoverStatus.autonState() = newRoverStatus.autonState();
 			return true;
 		}
-
-		if( mRoverStatus.currentState() == NavState::Search ) 
-		//	&&
-		// 	  mRoverStatus.currentState() == NavState::Search ) &&
-		// 	!isEqual( mRoverStatus.tennisBall(), newRoverStatus.tennisBall() ) )
+		if( ( mRoverStatus.currentState() == NavState::TurnToBall ||
+ 			  mRoverStatus.currentState() == NavState::DriveToBall ) &&
+ 			!isEqual( mRoverStatus.tennisBall(), newRoverStatus.tennisBall() ) )
 		{
 			mRoverStatus.bearing() = newRoverStatus.bearing();
 			mRoverStatus.obstacle() = newRoverStatus.obstacle();
@@ -202,9 +206,7 @@ bool Rover::updateRover( RoverStatus newRoverStatus )
 			return true;
 		}
 
-		// std::cout << mRoverStatus.bearing().bearing << " " << newRoverStatus.bearing().bearing << "\n";
-
-		if( !isEqual(mRoverStatus.bearing(), newRoverStatus.bearing() ) ||
+		if( !isEqual( mRoverStatus.bearing(), newRoverStatus.bearing() ) ||
 			!isEqual( mRoverStatus.obstacle(), newRoverStatus.obstacle() ) ||
 			!isEqual( mRoverStatus.odometry(), newRoverStatus.odometry() ) ||
 			!isEqual( mRoverStatus.tennisBall(), newRoverStatus.tennisBall() ) )
@@ -263,7 +265,6 @@ PidLoop& Rover::bearingPid()
 // leftRight efforts.
 void Rover::publishJoystick( const double forwardBack, const double leftRight, const bool kill )
 {
-	// printf("f-b: %lf, l-r: %lf\n", forwardBack, leftRight);
 	Joystick joystick;
 	joystick.dampen = -1.0; // power limit (0 = 50%, 1 = 0%, -1 = 100% power)
 	joystick.forward_back = -forwardBack;
@@ -277,11 +278,7 @@ void Rover::publishJoystick( const double forwardBack, const double leftRight, c
 // otherwise.
 bool Rover::isEqual( const Bearing& bearing1, const Bearing& bearing2 ) const
 {
-	if( bearing1.bearing == bearing2.bearing )
-	{
-		return true;
-	}
-	return false;
+	return (bearing1.bearing == bearing2.bearing );
 } // isEqual( bearing )
 
 // Returns true if the two obstacle messages are equal, false
