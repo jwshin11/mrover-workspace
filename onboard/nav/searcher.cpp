@@ -153,9 +153,22 @@ NavState Searcher::executeSearchTurn( Rover* mPhoebe, const rapidjson::Document&
 	
 	if( mSearchPoints.empty() )
 	{
-		mPhoebe->roverStatus().path().pop();
-		stateMachine->updateMissedPoints();
-		return NavState::Turn;
+		static int searchFails = 0;
+		searchFails += 1;
+
+		if ( searchFails >= 1 ) {
+			mPhoebe->roverStatus().path().pop();
+			stateMachine->updateMissedPoints();
+			return NavState::Turn;
+		}
+		else {
+			if (searchFails == 1)
+				stateMachine->setSeacher(SearchType::LAWNMOWER);
+			if (searchFails == 2)
+				stateMachine->setSeacher(SearchType::SPIRALIN);
+			initializeSearch( mPhoebe, mRoverConfig );
+			return NavState::SearchTurn;
+		}	
 	}
 	
 	Odometry& nextSearchPoint = mSearchPoints.front();

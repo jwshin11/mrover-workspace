@@ -124,7 +124,8 @@ DriveStatus Rover::drive( const double distance, const double bearing )
 	if( fabs( bearing - mRoverStatus.bearing().bearing ) < mRoverConfig[ "drivingBearingThresh" ].GetDouble() )
 	{
 		double distanceEffort = mDistancePid.update( -1 * distance, 0 );
-		double destinationBearing = mod( mRoverStatus.bearing().bearing + bearing, 360);
+		double destinationBearing = bearing;
+		//double destinationBearing = mod( mRoverStatus.bearing().bearing + bearing, 360);
 		throughZero( destinationBearing, mRoverStatus.bearing().bearing );
 		double turningEffort = mBearingPid.update( mRoverStatus.bearing().bearing, destinationBearing );
 		publishJoystick( distanceEffort, turningEffort, false );

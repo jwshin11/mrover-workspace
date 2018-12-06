@@ -43,6 +43,8 @@ public:
 
 	void updateObstacleAngle( double angle );
 
+	void setSeacher(SearchType type);
+
 private:
 	/*************************************************************************/
 	/* Private Member Functions */

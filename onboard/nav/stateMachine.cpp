@@ -37,7 +37,7 @@ StateMachine::StateMachine( lcm::LCM& lcmObject )
 	configFile.close();
 	mRoverConfig.Parse( config.c_str() );
 	mPhoebe = new Rover( mRoverConfig, lcmObject );
-	mSearcher = SearchFactory( this, SearchType::LAWNMOWER );
+	mSearcher = SearchFactory( this, SearchType::SPIRALOUT );
 } // StateMachine()
 
 
@@ -46,6 +46,12 @@ StateMachine::StateMachine( lcm::LCM& lcmObject )
 StateMachine::~StateMachine()
 {
 	delete mPhoebe;
+}
+
+void StateMachine::setSeacher(SearchType type) 
+{
+	if(mSearcher) delete mSearcher;
+	mSearcher = SearchFactory( this, type );
 }
 
 void StateMachine::updateMissedPoints( ) 

@@ -5,23 +5,41 @@
 
 enum class SearchType
 {
-	SPIRAL,
+	SPIRALOUT,
 	LAWNMOWER,
+	SPIRALIN,
 	UNKNOWN
 };
 
 Searcher* SearchFactory( StateMachine* stateMachine, SearchType type );
 
 /*************************************************************************/
-/* Spiral Search */
+/* SpiralOut Search */
 /*************************************************************************/
-class Spiral : public Searcher 
+class SpiralOut : public Searcher 
 {
 public:
-	Spiral( StateMachine* stateMachine_ ) 
+	SpiralOut( StateMachine* stateMachine_ ) 
 	: Searcher(stateMachine_) {}
 
-	~Spiral();
+	~SpiralOut();
+
+	// Initializes the search ponit multipliers to be the intermost loop
+ 	// of the search.
+	void initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRoverConfig );
+	
+};
+
+/*************************************************************************/
+/* SpiralIn Search */
+/*************************************************************************/
+class SpiralIn : public Searcher 
+{
+public:
+	SpiralIn( StateMachine* stateMachine_ ) 
+	: Searcher(stateMachine_) {}
+
+	~SpiralIn();
 
 	// Initializes the search ponit multipliers to be the intermost loop
  	// of the search.
