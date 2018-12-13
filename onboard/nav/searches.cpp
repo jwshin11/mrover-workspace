@@ -8,7 +8,7 @@
 #include <cmath>
 #include <stack>
 
-void reverseQueue(queue<Odometry>& Queue)
+void reverseQueue(queue<Odometry>& Queue) //TODO
 {
     stack<Odometry> Stack;
     while (!Queue.empty()) {
@@ -20,6 +20,35 @@ void reverseQueue(queue<Odometry>& Queue)
         Stack.pop();
     }
 }
+
+/*************************************************************************/
+/* Searcher Factory */
+/*************************************************************************/
+Searcher* SearchFactory( StateMachine* stateMachine, SearchType type )  //TODO
+{
+	Searcher* search = nullptr;
+	switch (type)
+	{
+		case SearchType::SPIRALOUT:
+			search = new SpiralOut( stateMachine );
+			break;
+
+		case SearchType::LAWNMOWER:
+			search = new LawnMower( stateMachine );
+			break;
+
+		case SearchType::SPIRALIN:
+			search = new SpiralIn( stateMachine );
+			break;
+
+		case SearchType::UNKNOWN:
+			std::cerr << "Unkown Search Type. Defaulting to Spiral\n";
+			search = new SpiralOut( stateMachine );
+			break;
+	}
+	return search;
+}
+
 /*************************************************************************/
 /* Spiral Search */
 /*************************************************************************/
@@ -27,17 +56,15 @@ SpiralOut::~SpiralOut() {}
 
 // Initializes the search ponit multipliers to be the intermost loop
 // of the search.
-void SpiralOut::initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRoverConfig )
+void SpiralOut::initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRoverConfig, const double pathWidth )
 {
-	const double pathWidth = mRoverConfig[ "pathWidth" ].GetDouble();
-
 	clear( mSearchPoints );
 
 	mSearchPointMultipliers.clear();
-	mSearchPointMultipliers.push_back( pair<short, short> ( 0, 1 ) );
-	mSearchPointMultipliers.push_back( pair<short, short> ( -1, 1 ) );
+	mSearchPointMultipliers.push_back( pair<short, short> (  0,  1 ) );
+	mSearchPointMultipliers.push_back( pair<short, short> ( -1,  1 ) );
 	mSearchPointMultipliers.push_back( pair<short, short> ( -1, -1 ) );
-	mSearchPointMultipliers.push_back( pair<short, short> ( 1, -1 ) );
+	mSearchPointMultipliers.push_back( pair<short, short> (  1, -1 ) );
 
 	while( mSearchPointMultipliers[ 0 ].second * pathWidth < mRoverConfig[ "searchBailThresh" ].GetDouble() ) {
 		for( auto& mSearchPointMultiplier : mSearchPointMultipliers )
@@ -57,6 +84,7 @@ void SpiralOut::initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRo
 
 			mSearchPointMultiplier.first < 0 ? --mSearchPointMultiplier.first : ++mSearchPointMultiplier.first;
 			mSearchPointMultiplier.second < 0 ? --mSearchPointMultiplier.second : ++mSearchPointMultiplier.second;
+
 		}
 	}
 } // initializeSearch()
@@ -68,17 +96,15 @@ SpiralIn::~SpiralIn() {}
 
 // Initializes the search ponit multipliers to be the intermost loop
 // of the search.
-void SpiralIn::initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRoverConfig )
+void SpiralIn::initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRoverConfig, const double pathWidth )
 {
-	const double pathWidth = mRoverConfig[ "pathWidth" ].GetDouble();
-
 	clear( mSearchPoints );
 
 	mSearchPointMultipliers.clear();
-	mSearchPointMultipliers.push_back( pair<short, short> ( -1, 0 ) );
-	mSearchPointMultipliers.push_back( pair<short, short> ( -1, 1 ) );
-	mSearchPointMultipliers.push_back( pair<short, short> ( 1, 1 ) );
-	mSearchPointMultipliers.push_back( pair<short, short> ( 1, -1 ) );
+	mSearchPointMultipliers.push_back( pair<short, short> ( -1,  0 ) );
+	mSearchPointMultipliers.push_back( pair<short, short> ( -1,  1 ) );
+	mSearchPointMultipliers.push_back( pair<short, short> (  1,  1 ) );
+	mSearchPointMultipliers.push_back( pair<short, short> (  1, -1 ) );
 
 	while( mSearchPointMultipliers[ 0 ].second * pathWidth < mRoverConfig[ "searchBailThresh" ].GetDouble() ) {
 		for( auto& mSearchPointMultiplier : mSearchPointMultipliers )
@@ -108,17 +134,18 @@ void SpiralIn::initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRov
 /*************************************************************************/
 LawnMower::~LawnMower() {}
 
-void LawnMower::initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRoverConfig )
+void LawnMower::initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRoverConfig, const double pathWidth )
 {
-	const double pathWidth = mRoverConfig[ "pathWidth" ].GetDouble();
 	const double searchBailThresh = mRoverConfig[ "searchBailThresh" ].GetDouble();
 
 	clear( mSearchPoints );
+	
 	mSearchPointMultipliers.clear();
-	mSearchPointMultipliers.push_back( pair<short, short> ( 0, 1 ) );
+	mSearchPointMultipliers.push_back( pair<short, short> (  0, 0 ) );
+	mSearchPointMultipliers.push_back( pair<short, short> (  0, 1 ) );
 	mSearchPointMultipliers.push_back( pair<short, short> ( -1, 1 ) );
 	mSearchPointMultipliers.push_back( pair<short, short> ( -1, 0 ) );
-	mSearchPointMultipliers.push_back( pair<short, short> ( -2, 0 ) );
+	// mSearchPointMultipliers.push_back( pair<short, short> ( -2, 0 ) );
 
 
 	while( fabs(mSearchPointMultipliers[ 0 ].first * pathWidth) < searchBailThresh )
@@ -144,30 +171,12 @@ void LawnMower::initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRo
 } // initializeSearch()
 
 
-/*************************************************************************/
-/* LawnMower Search */
-/*************************************************************************/
-Searcher* SearchFactory( StateMachine* stateMachine, SearchType type )
-{
-	Searcher* search = nullptr;
-	switch (type)
-	{
-		case SearchType::SPIRALOUT:
-			search = new SpiralOut( stateMachine );
-			break;
 
-		case SearchType::LAWNMOWER:
-			search = new LawnMower( stateMachine );
-			break;
+/*************/
+/* TODO */
+/*************/
+// TODO: Incorporate this into the StateMachine Function?
+//		 Currently seems like a swiss-army knife function. Too abstracted. No reason for it to be here. 
+// TODO: More efficient spiral in than reversing the whole queue?
 
-		case SearchType::SPIRALIN:
-			search = new SpiralIn( stateMachine );
-			break;
 
-		case SearchType::UNKNOWN:
-			std::cerr << "Unkown Search Type. Defaulting to Spiral\n";
-			search = new SpiralOut( stateMachine );
-			break;
-	}
-	return search;
-}

@@ -26,7 +26,7 @@ public:
 
 	// Initializes the search ponit multipliers to be the intermost loop
  	// of the search.
-	void initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRoverConfig );
+	void initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRoverConfig, const double pathWidth );
 	
 };
 
@@ -43,7 +43,7 @@ public:
 
 	// Initializes the search ponit multipliers to be the intermost loop
  	// of the search.
-	void initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRoverConfig );
+	void initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRoverConfig, const double pathWidth );
 	
 };
 
@@ -60,8 +60,13 @@ public:
 
 	// Initializes the search ponit multipliers to be the intermost loop
  	// of the search.
-	void initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRoverConfig );
+	void initializeSearch( Rover* mPhoebe, const rapidjson::Document& mRoverConfig, const double pathWidth );
 
 };
 
 #endif //SEARCHES_HPP
+
+/*************************************************************************/
+/* TODO */
+/*************************************************************************/
+

@@ -19,7 +19,7 @@
 	"atGoalDistanceThresh": 2,
 
 	"pathWidth": 2,
-	"searchBailThresh": 10,
+	"searchBailThresh": 4,
 	"cvThresh": 3,
 
 	"navStatusChannel": "/nav_status",
